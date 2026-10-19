@@ -267,7 +267,7 @@ const minuteText = minuteFlap.querySelector('.text');
 let startedAt = Date.now();
 let minuteDeadline = null;
 let minuteInterval = null;
-let minuteResetTimeout = null;
+let minuteIntroTimeout = null;
 
 function updateLights() {
     const seconds = Math.floor((Date.now() - startedAt) / 1000);
@@ -278,9 +278,9 @@ function updateLights() {
 
 function cancelMinuteTimer() {
     clearInterval(minuteInterval);
-    clearTimeout(minuteResetTimeout);
+    clearTimeout(minuteIntroTimeout);
     minuteInterval = null;
-    minuteResetTimeout = null;
+    minuteIntroTimeout = null;
     minuteDeadline = null;
 }
 
@@ -289,26 +289,25 @@ function resetMinuteText() {
     minuteText.textContent = 'minute to go';
 }
 
+function showOneSecondToGo() {
+    minuteNumber.textContent = '1';
+    minuteText.textContent = 'second to go';
+    minuteFlap.setAttribute('aria-label', 'Close 1 second to go');
+}
+
 function updateMinuteTimer() {
     if (minuteDeadline === null) return;
     const seconds = Math.max(0, Math.ceil((minuteDeadline - Date.now()) / 1000));
+    if (seconds === 0) {
+        // Leave the second-last flap open with 1 Second to go showing.
+        cancelMinuteTimer();
+        showOneSecondToGo();
+        return;
+    }
     minuteNumber.textContent = seconds;
     minuteText.textContent = seconds === 1 ? 'second to go' : 'seconds to go';
-    if (seconds === 0) {
-        clearInterval(minuteInterval);
-        minuteInterval = null;
-        minuteDeadline = null;
-        minuteText.textContent = 'Open FINISHED 🎉';
-        // Close the last-minute flap again after the completion message.
-        minuteResetTimeout = setTimeout(() => {
-            const cover = minuteFlap.querySelector('.cover');
-            cover.classList.remove('open');
-            minuteFlap.setAttribute('aria-pressed', 'false');
-            minuteFlap.setAttribute('aria-label', 'Open 1 minute to go');
-            resetMinuteText();
-            minuteResetTimeout = null;
-        }, 2500);
-    }
+    minuteFlap.setAttribute('aria-label',
+        'Close ' + seconds + (seconds === 1 ? ' second to go' : ' seconds to go'));
 }
 
 function toggleFlap(flap) {
@@ -326,11 +325,19 @@ function toggleFlap(flap) {
     if (flap === minuteFlap) {
         cancelMinuteTimer();
         if (isOpen) {
-            minuteDeadline = Date.now() + 60_000;
-            updateMinuteTimer();
-            minuteInterval = setInterval(updateMinuteTimer, 250);
+            // Hold 1 Second to go for 500ms after the opening flap animation.
+            showOneSecondToGo();
+            const flapAnimation = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 800;
+            minuteIntroTimeout = setTimeout(() => {
+                minuteIntroTimeout = null;
+                if (!cover.classList.contains('open')) return;
+                minuteDeadline = Date.now() + 60_000;
+                updateMinuteTimer();
+                minuteInterval = setInterval(updateMinuteTimer, 250);
+            }, flapAnimation + 500);
         } else {
             resetMinuteText();
+            flap.setAttribute('aria-label', 'Open 1 minute to go');
         }
     }
 }
