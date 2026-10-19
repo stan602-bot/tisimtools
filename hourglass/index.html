@@ -21,10 +21,7 @@ svg{display:block;width:100%;height:100%}
 #sand{transform-origin:250px 290px;transition:none}
 #particles{opacity:0}
 .running #particles{opacity:1}
-.running .dot{animation:fall .75s linear infinite}
-.dot:nth-child(2){animation-delay:-.2s}
-.dot:nth-child(3){animation-delay:-.43s}
-@keyframes fall{from{transform:translateY(-13px);opacity:0}22%{opacity:1}to{transform:translateY(32px);opacity:0}}
+.grain{opacity:.95}
 .status{font-size:clamp(1rem,2vw,1.2rem);font-weight:800;min-height:28px;text-align:center;color:#ffe4aa}
 .panel{margin:0 auto;width:min(590px,100%);padding:clamp(15px,3vw,24px);background:#16283b;border:1px solid #ffffff30;border-radius:22px;box-shadow:0 15px 30px #0003}
 .prompt{margin:0 0 12px;font-weight:800}
@@ -47,7 +44,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 [hidden]{display:none!important}
 @media(max-height:720px) and (min-width:650px){.visual{width:min(250px,38dvh)}.stage{margin:4px 0}.panel{padding:14px}}
 @media(max-width:480px){.visual{width:min(300px,82vw,42dvh)}h1{margin-top:2px}.panel{padding:15px}.button{width:100%}.stage{margin:5px 0}}
-@media(prefers-reduced-motion:reduce){.rotator{transition-duration:.01ms}.dot{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.rotator{transition-duration:.01ms}}
 </style>
 </head>
 <body>
@@ -58,23 +55,48 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 <div class="visual" id="visual"><div class="rotator" id="rotator">
 <svg viewBox="0 0 500 580" role="img" aria-labelledby="glassTitle glassDesc">
 <title id="glassTitle">Sand hourglass</title>
-<desc id="glassDesc">Golden sand falls through an hourglass from top to bottom.</desc>
+<desc id="glassDesc">Multicoloured sand gradually pours from the top to the bottom chamber, with the stream touching the surface of the sand below.</desc>
 <defs>
 <linearGradient id="wood"><stop stop-color="#8a5b2b"/><stop offset=".28" stop-color="#eac381"/><stop offset=".72" stop-color="#af753b"/><stop offset="1" stop-color="#764825"/></linearGradient>
-<linearGradient id="sandColor" x1="0" x2="0.5" y1="0" y2="1"><stop stop-color="#ffe8ab"/><stop offset="1" stop-color="#e3a23b"/></linearGradient>
+<!-- Six distinct rainbow bands, fixed relative to each glass chamber. -->
+<linearGradient id="topRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="118" x2="0" y2="287">
+<stop offset="0%" stop-color="#ff6d8e"/><stop offset="16.6%" stop-color="#ff6d8e"/>
+<stop offset="16.7%" stop-color="#ffa95c"/><stop offset="33.3%" stop-color="#ffa95c"/>
+<stop offset="33.4%" stop-color="#ffdc61"/><stop offset="50%" stop-color="#ffdc61"/>
+<stop offset="50.1%" stop-color="#69d8a0"/><stop offset="66.6%" stop-color="#69d8a0"/>
+<stop offset="66.7%" stop-color="#62c7f5"/><stop offset="83.3%" stop-color="#62c7f5"/>
+<stop offset="83.4%" stop-color="#c38dff"/><stop offset="100%" stop-color="#c38dff"/>
+</linearGradient>
+<linearGradient id="bottomRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="462" x2="0" y2="294">
+<stop offset="0%" stop-color="#c38dff"/><stop offset="16.6%" stop-color="#c38dff"/>
+<stop offset="16.7%" stop-color="#62c7f5"/><stop offset="33.3%" stop-color="#62c7f5"/>
+<stop offset="33.4%" stop-color="#69d8a0"/><stop offset="50%" stop-color="#69d8a0"/>
+<stop offset="50.1%" stop-color="#ffdc61"/><stop offset="66.6%" stop-color="#ffdc61"/>
+<stop offset="66.7%" stop-color="#ffa95c"/><stop offset="83.3%" stop-color="#ffa95c"/>
+<stop offset="83.4%" stop-color="#ff6d8e"/><stop offset="100%" stop-color="#ff6d8e"/>
+</linearGradient>
+<linearGradient id="pourRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="290" x2="0" y2="462">
+<stop offset="0%" stop-color="#ff6d8e"/><stop offset="25%" stop-color="#ffdc61"/>
+<stop offset="50%" stop-color="#69d8a0"/><stop offset="75%" stop-color="#62c7f5"/>
+<stop offset="100%" stop-color="#c38dff"/>
+</linearGradient>
 <clipPath id="upperClip"><path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z"/></clipPath>
 <clipPath id="lowerClip"><path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z"/></clipPath>
 </defs>
 <path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <g id="sand">
-<rect id="topSand" x="144" y="287" width="212" height="0" fill="url(#sandColor)" clip-path="url(#upperClip)"/>
-<rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#sandColor)" clip-path="url(#lowerClip)"/>
-<g id="particles">
-<line x1="250" y1="286" x2="250" y2="341" stroke="#ffca64" stroke-width="3.5" stroke-linecap="round"/>
-<circle class="dot" cx="249" cy="310" r="2.8" fill="#fff0c6"/>
-<circle class="dot" cx="253" cy="315" r="2.4" fill="#f7b945"/>
-<circle class="dot" cx="248" cy="321" r="2" fill="#ffe4a4"/>
+<rect id="topSand" x="144" y="287" width="212" height="0" fill="url(#topRainbow)" clip-path="url(#upperClip)"/>
+<rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#bottomRainbow)" clip-path="url(#lowerClip)"/>
+<!-- Stream length is updated each frame to reach the current lower sand surface. -->
+<g id="particles" aria-hidden="true">
+<line id="sandStream" x1="250" y1="288" x2="250" y2="462" stroke="url(#pourRainbow)" stroke-width="4" stroke-linecap="round"/>
+<circle class="grain" cx="248" cy="296" r="3.0" fill="#ff6d8e"/>
+<circle class="grain" cx="252" cy="320" r="2.6" fill="#ffa95c"/>
+<circle class="grain" cx="249" cy="345" r="2.9" fill="#ffdc61"/>
+<circle class="grain" cx="251" cy="370" r="2.5" fill="#69d8a0"/>
+<circle class="grain" cx="247" cy="399" r="2.7" fill="#62c7f5"/>
+<circle class="grain" cx="253" cy="435" r="2.8" fill="#c38dff"/>
 </g></g>
 <path d="M177 144 Q181 199 215 235 M175 435 Q177 385 214 354" fill="none" stroke="#fff" stroke-width="8" opacity=".28" stroke-linecap="round"/>
 <rect x="134" y="98" width="15" height="384" rx="7" fill="url(#wood)"/>
@@ -112,6 +134,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 "use strict";
 const el=id=>document.getElementById(id);
 const visual=el("visual"),rotator=el("rotator"),sandLayer=el("sand"),topSand=el("topSand"),bottomSand=el("bottomSand");
+const stream=el("sandStream"),grains=Array.from(document.querySelectorAll("#particles .grain"));
 const status=el("status"),setup=el("setup"),minutes=el("minutes"),seconds=el("seconds"),error=el("error");
 const turn=el("turn"),pause=el("pause"),resume=el("resume"),change=el("change");
 let state="ready",angle=0,duration=120000,remaining=duration,deadline=0,raf=0,flipTimer=0,token=0;
@@ -125,10 +148,23 @@ function show(){
   turn.textContent=state==="finished"?"↻ Turn Again":"↻ Turn Hourglass";
 }
 function sand(progress){
+ // Sand level must rise LINEARLY with elapsed time, not sqrt(time),
+ // which previously made the lower chamber look almost full far too soon.
  const p=Math.max(0,Math.min(1,progress));
- const upper=169*Math.sqrt(1-p),lower=168*Math.sqrt(p);
+ const upper=169*(1-p),lower=168*p;
  topSand.setAttribute("y",String(287-upper));topSand.setAttribute("height",String(upper));
- bottomSand.setAttribute("y",String(462-lower));bottomSand.setAttribute("height",String(lower));
+ const sandSurface=462-lower;
+ bottomSand.setAttribute("y",String(sandSurface));bottomSand.setAttribute("height",String(lower));
+ // Let the stream reach the actual sand surface, even at the start.
+ stream.setAttribute("y2",String(sandSurface+1));
+ // Colored grains travel down the changing-length stream all the way to the pile.
+ const distance=Math.max(0,sandSurface-291);
+ const cycle=(Date.now()%1150)/1150;
+ grains.forEach((grain,i)=>{
+  const along=(cycle+i/grains.length)%1;
+  grain.setAttribute("cy",String(291+distance*along));
+  grain.setAttribute("cx",String(250+Math.sin((along*9+i)*2.3)*2.5));
+ });
 }
 function stop(){
  token++;clearTimeout(flipTimer);cancelAnimationFrame(raf);
