@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101b2a">
+<title>Custom Hourglass | Conor’s TiSiM Tools</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50% -10%,#31506a 0%,#17283b 40%,#0b1420 100%);color:#f7fbff}
+main{width:min(900px,100%);min-height:100dvh;margin:auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column}
+.back{align-self:flex-start;display:inline-flex;align-items:center;min-height:44px;color:#c4d8e9;text-decoration:none;font-weight:750}
+.back:hover,.back:focus-visible{text-decoration:underline}
+h1{font-size:clamp(2rem,5vw,3.15rem);letter-spacing:-.045em;line-height:1.08;margin:12px 0 7px}
+.lead{color:#c0d1de;line-height:1.5;margin:0;font-size:clamp(.95rem,1.8vw,1.1rem)}
+.stage{flex:1 0 auto;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:230px;margin:12px 0 8px}
+.visual{width:min(360px,85vw,45dvh);min-width:min(182px,80vw);aspect-ratio:500/580;filter:drop-shadow(0 18px 14px #0008)}
+.rotator{height:100%;width:100%;transition:transform .95s cubic-bezier(.3,0,.19,1);transform-origin:center}
+svg{display:block;width:100%;height:100%}
+#sand{transform-origin:250px 290px;transition:none}
+#particles{opacity:0}
+.running #particles{opacity:1}
+.running .dot{animation:fall .75s linear infinite}
+.dot:nth-child(2){animation-delay:-.2s}
+.dot:nth-child(3){animation-delay:-.43s}
+@keyframes fall{from{transform:translateY(-13px);opacity:0}22%{opacity:1}to{transform:translateY(32px);opacity:0}}
+.status{font-size:clamp(1rem,2vw,1.2rem);font-weight:800;min-height:28px;text-align:center;color:#ffe4aa}
+.panel{margin:0 auto;width:min(590px,100%);padding:clamp(15px,3vw,24px);background:#16283b;border:1px solid #ffffff30;border-radius:22px;box-shadow:0 15px 30px #0003}
+.prompt{margin:0 0 12px;font-weight:800}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px}
+.field label{display:block;font-weight:700;margin-bottom:7px}
+.field input{display:block;width:100%;min-width:0;min-height:52px;padding:11px 12px;background:#071725;color:white;border:1px solid #8493a9;border-radius:12px;font:800 1.25rem Arial,sans-serif;appearance:textfield}
+.field input::-webkit-inner-spin-button{appearance:none}
+.presets,.buttons{display:flex;flex-wrap:wrap;gap:9px}
+.presets{margin:10px 0 16px}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+.preset{padding:8px 12px;min-height:40px;background:#2c4965;border:1px solid #7990a7;border-radius:999px;color:white;font-weight:700}
+.buttons{justify-content:center}
+.button{border:0;border-radius:13px;padding:11px 20px;min-height:48px;font-weight:800}
+.primary{color:#2e210d;background:linear-gradient(115deg,#ffe09b,#f6b64e)}
+.secondary{background:#354e67;color:white;border:1px solid #ffffff27}
+button:hover{filter:brightness(1.13)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd68b;outline-offset:2px}
+.note{color:#b9cbdc;text-align:center;line-height:1.4;font-size:.91rem;margin:13px 0 0}
+.error{color:#ffbcb3;font-weight:750;margin:0 0 10px}
+[hidden]{display:none!important}
+@media(max-height:720px) and (min-width:650px){.visual{width:min(250px,38dvh)}.stage{margin:4px 0}.panel{padding:14px}}
+@media(max-width:480px){.visual{width:min(300px,82vw,42dvh)}h1{margin-top:2px}.panel{padding:15px}.button{width:100%}.stage{margin:5px 0}}
+@media(prefers-reduced-motion:reduce){.rotator{transition-duration:.01ms}.dot{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../timers/">← Timers · Conor’s TiSiM Tools</a>
+<header><h1>Custom Hourglass</h1><p class="lead">Choose the time, turn the glass, and watch the sand pour.</p></header>
+<section class="stage" aria-label="Hourglass">
+<div class="visual" id="visual"><div class="rotator" id="rotator">
+<svg viewBox="0 0 500 580" role="img" aria-labelledby="glassTitle glassDesc">
+<title id="glassTitle">Sand hourglass</title>
+<desc id="glassDesc">Golden sand falls through an hourglass from top to bottom.</desc>
+<defs>
+<linearGradient id="wood"><stop stop-color="#8a5b2b"/><stop offset=".28" stop-color="#eac381"/><stop offset=".72" stop-color="#af753b"/><stop offset="1" stop-color="#764825"/></linearGradient>
+<linearGradient id="sandColor" x1="0" x2="0.5" y1="0" y2="1"><stop stop-color="#ffe8ab"/><stop offset="1" stop-color="#e3a23b"/></linearGradient>
+<clipPath id="upperClip"><path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z"/></clipPath>
+<clipPath id="lowerClip"><path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z"/></clipPath>
+</defs>
+<path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
+<path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
+<g id="sand">
+<rect id="topSand" x="144" y="287" width="212" height="0" fill="url(#sandColor)" clip-path="url(#upperClip)"/>
+<rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#sandColor)" clip-path="url(#lowerClip)"/>
+<g id="particles">
+<line x1="250" y1="286" x2="250" y2="341" stroke="#ffca64" stroke-width="3.5" stroke-linecap="round"/>
+<circle class="dot" cx="249" cy="310" r="2.8" fill="#fff0c6"/>
+<circle class="dot" cx="253" cy="315" r="2.4" fill="#f7b945"/>
+<circle class="dot" cx="248" cy="321" r="2" fill="#ffe4a4"/>
+</g></g>
+<path d="M177 144 Q181 199 215 235 M175 435 Q177 385 214 354" fill="none" stroke="#fff" stroke-width="8" opacity=".28" stroke-linecap="round"/>
+<rect x="134" y="98" width="15" height="384" rx="7" fill="url(#wood)"/>
+<rect x="351" y="98" width="15" height="384" rx="7" fill="url(#wood)"/>
+<rect x="113" y="88" width="274" height="33" rx="13" fill="url(#wood)" stroke="#eed1a0" stroke-width="2"/>
+<rect x="113" y="459" width="274" height="33" rx="13" fill="url(#wood)" stroke="#eed1a0" stroke-width="2"/>
+</svg></div></div>
+<div class="status" id="status" aria-live="polite">Ready to turn</div>
+</section>
+<section class="panel" aria-label="Hourglass settings and controls">
+<div id="setup">
+<p class="prompt">Set your hourglass</p>
+<div class="fields">
+<div class="field"><label for="minutes">Minutes</label><input id="minutes" type="number" min="0" max="180" step="1" inputmode="numeric" value="2"></div>
+<div class="field"><label for="seconds">Seconds</label><input id="seconds" type="number" min="0" max="59" step="1" inputmode="numeric" value="0"></div>
+</div>
+<p id="error" class="error" role="alert" hidden></p>
+<div class="presets" aria-label="Time presets">
+<button type="button" class="preset" data-preset="30">30 sec</button>
+<button type="button" class="preset" data-preset="60">1 min</button>
+<button type="button" class="preset" data-preset="120">2 min</button>
+<button type="button" class="preset" data-preset="300">5 min</button>
+<button type="button" class="preset" data-preset="600">10 min</button>
+</div></div>
+<div class="buttons">
+<button type="button" class="button primary" id="turn">↻ Turn Hourglass</button>
+<button type="button" class="button secondary" id="pause" hidden>Pause</button>
+<button type="button" class="button primary" id="resume" hidden>Continue</button>
+<button type="button" class="button secondary" id="change" hidden>Change time</button>
+</div>
+<p class="note">No digital countdown — follow the sand. The glass stays turned when finished.</p>
+</section></main>
+<script>
+(() => {
+"use strict";
+const el=id=>document.getElementById(id);
+const visual=el("visual"),rotator=el("rotator"),sandLayer=el("sand"),topSand=el("topSand"),bottomSand=el("bottomSand");
+const status=el("status"),setup=el("setup"),minutes=el("minutes"),seconds=el("seconds"),error=el("error");
+const turn=el("turn"),pause=el("pause"),resume=el("resume"),change=el("change");
+let state="ready",angle=0,duration=120000,remaining=duration,deadline=0,raf=0,flipTimer=0,token=0;
+const prefersReducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
+function show(){
+  setup.hidden=state!=="ready";
+  turn.hidden=state!=="ready"&&state!=="finished";
+  pause.hidden=state!=="running";
+  resume.hidden=state!=="paused";
+  change.hidden=state==="ready"||state==="turning";
+  turn.textContent=state==="finished"?"↻ Turn Again":"↻ Turn Hourglass";
+}
+function sand(progress){
+ const p=Math.max(0,Math.min(1,progress));
+ const upper=169*Math.sqrt(1-p),lower=168*Math.sqrt(p);
+ topSand.setAttribute("y",String(287-upper));topSand.setAttribute("height",String(upper));
+ bottomSand.setAttribute("y",String(462-lower));bottomSand.setAttribute("height",String(lower));
+}
+function stop(){
+ token++;clearTimeout(flipTimer);cancelAnimationFrame(raf);
+ raf=0;flipTimer=0;deadline=0;visual.classList.remove("running");
+}
+function finished(){
+ state="finished";remaining=0;deadline=0;raf=0;
+ visual.classList.remove("running");sand(1);
+ status.textContent="All the sand has fallen!";
+ show();
+ // No automatic rotation or resetting at completion.
+}
+function tick(){
+ if(state!=="running")return;
+ remaining=Math.max(0,deadline-Date.now());
+ sand(1-remaining/duration);
+ if(remaining<=0){finished();return}
+ raf=requestAnimationFrame(tick);
+}
+function readDuration(){
+ const m=Number(minutes.value),s=Number(seconds.value);
+ if(minutes.value.trim()===""||seconds.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(s)||m<0||m>180||s<0||s>59||(m===0&&s===0))return null;
+ return 1000*(m*60+s);
+}
+function start(){
+ if(state!=="ready"&&state!=="finished")return;
+ if(state==="ready"){
+  const value=readDuration();
+  if(value===null){error.textContent="Please enter 1 second to 180 minutes 59 seconds.";error.hidden=false;return}
+  duration=value;error.hidden=true;
+ }
+ stop();remaining=duration;state="turning";show();status.textContent="Turning the hourglass…";
+ angle+=180;rotator.style.transform="rotate("+angle+"deg)";
+ const current=token;
+ flipTimer=setTimeout(()=>{
+  if(current!==token||state!=="turning")return;
+  // Sand rotates naturally with the glass, then stays upright to flow down.
+  sandLayer.style.transform="rotate("+(-angle)+"deg)";
+  sand(0);state="running";deadline=Date.now()+remaining;
+  visual.classList.add("running");status.textContent="Sand is flowing…";
+  show();tick();
+ },prefersReducedMotion.matches?25:990);
+}
+function hold(){
+ if(state!=="running")return;
+ remaining=Math.max(0,deadline-Date.now());cancelAnimationFrame(raf);raf=0;
+ if(remaining<=0){finished();return}
+ state="paused";visual.classList.remove("running");status.textContent="Sand paused";show();
+}
+function proceed(){
+ if(state!=="paused")return;
+ state="running";deadline=Date.now()+remaining;visual.classList.add("running");
+ status.textContent="Sand is flowing…";show();tick();
+}
+function editTime(){
+ stop();state="ready";sand(1);remaining=duration;status.textContent="Ready to turn";show();
+}
+turn.addEventListener("click",start);
+pause.addEventListener("click",hold);
+resume.addEventListener("click",proceed);
+change.addEventListener("click",editTime);
+document.querySelectorAll("[data-preset]").forEach(button=>button.addEventListener("click",()=>{
+ const total=Number(button.dataset.preset);minutes.value=String(Math.floor(total/60));seconds.value=String(total%60);error.hidden=true;
+}));
+document.addEventListener("visibilitychange",()=>{
+ if(!document.hidden&&state==="running"){cancelAnimationFrame(raf);tick()}
+});
+window.addEventListener("pageshow",event=>{
+ if(event.persisted&&state==="running"){cancelAnimationFrame(raf);tick()}
+});
+sand(1);show();
+})();
+</script>
+</body></html>
