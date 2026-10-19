@@ -449,6 +449,23 @@
         box-shadow:0 24px 70px rgba(0,0,0,.3);
       }
     }
+
+    /* Make the blue stem visibly enter the green bulb across screen sizes.
+       Raising the green bulb by a fifth of its diameter creates a substantial
+       overlap rather than a square butt-joint at the bottom of the blue stem. */
+    .green {
+      position: relative;
+      z-index: 2;
+      transform: translateY(-20%);
+    }
+
+    /* Safari's 100vh can exceed the actual visible area. Use the existing
+       visualViewport-driven height and lift the controls clear of the bottom. */
+    #app { min-height: 0; }
+    #controls { bottom: max(58px, calc(env(safe-area-inset-bottom) + 38px)); }
+    @media (orientation: portrait) {
+      #controls { bottom: max(58px, calc(env(safe-area-inset-bottom) + 38px)); }
+    }
   </style>
 </head>
 <body>
