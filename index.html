@@ -29,9 +29,25 @@ h1{font-size:clamp(2.3rem,7vw,4.4rem);line-height:1.05;letter-spacing:-.045em;ma
 .back{display:inline-block;margin-top:20px;color:#bdd7ec;font-weight:700;text-underline-offset:4px}
 @media(max-width:660px){.grid{grid-template-columns:1fr}.card{min-height:215px;border-radius:21px}.card-icon{margin-bottom:9px}.card-go{padding-top:15px}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
+
+/* Native-feeling mobile pull to refresh on directory landing pages. */
+.pull-refresh-hint {
+  position: fixed; z-index: 999; left: 50%;
+  top: max(10px, env(safe-area-inset-top));
+  transform: translate(-50%, -14px);
+  opacity: 0; pointer-events: none;
+  background: #243e58; color: white; border: 1px solid #b8d5ec66;
+  box-shadow: 0 6px 20px #0005;
+  padding: 11px 18px; border-radius: 999px;
+  font-size: 14px; font-weight: 800; text-align: center;
+  white-space: nowrap; transition: opacity .14s ease, transform .14s ease;
+}
+body.pull-refresh-active .pull-refresh-hint { transform: translate(-50%, 8px); opacity: 1; }
+body { overscroll-behavior-y: contain; }
 </style>
 </head>
 <body>
+<div class="pull-refresh-hint" id="pullRefreshHint" role="status" aria-live="polite">↓ Pull to refresh</div>
 <main>
 <a class="brand" href="./" aria-label="Conor’s TiSiM Tools homepage"><span class="brand-dot" aria-hidden="true"></span>Conor’s TiSiM Tools</a>
 <h1>Conor’s TiSiM Tools</h1>
@@ -52,5 +68,85 @@ h1{font-size:clamp(2.3rem,7vw,4.4rem);line-height:1.05;letter-spacing:-.045em;ma
 </nav>
 <p class="footer">Designed for touchscreens, iPads and larger displays.</p>
 </main>
+<script>
+(() => {
+  'use strict';
+  const main = document.querySelector('main');
+  const hint = document.getElementById('pullRefreshHint');
+  const threshold = 100;
+  let activeTouch = null;
+  let pulling = false;
+  let refreshing = false;
+  let blockClickUntil = 0;
+  let hiding = null;
+
+  function tracked(list) {
+    return Array.from(list).find(touch => activeTouch && touch.identifier === activeTouch.id);
+  }
+  function reset(keepHint = false) {
+    activeTouch = null;
+    pulling = false;
+    main.style.transition = 'transform .18s ease-out';
+    main.style.transform = '';
+    if (!keepHint) {
+      hint.textContent = '↓ Pull to refresh';
+      document.body.classList.remove('pull-refresh-active');
+    }
+  }
+  document.addEventListener('touchstart', event => {
+    if (refreshing || event.touches.length !== 1 || window.scrollY > 1) return;
+    clearTimeout(hiding);
+    const touch = event.touches[0];
+    activeTouch = { id: touch.identifier, x: touch.clientX, y: touch.clientY };
+    pulling = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', event => {
+    if (!activeTouch || refreshing || event.touches.length !== 1) return;
+    const touch = tracked(event.touches);
+    if (!touch) return;
+    const distance = touch.clientY - activeTouch.y;
+    const horizontal = Math.abs(touch.clientX - activeTouch.x);
+    if (!pulling) {
+      if (distance <= 12 || distance < horizontal * 1.25 || window.scrollY > 1) return;
+      pulling = true;
+      document.body.classList.add('pull-refresh-active');
+      main.style.transition = 'none';
+    }
+    if (event.cancelable) event.preventDefault();
+    blockClickUntil = Date.now() + 700;
+    main.style.transform = 'translate3d(0,' + Math.min(62, Math.max(0, distance) * .35) + 'px,0)';
+    hint.textContent = distance >= threshold ? '↻ Release to refresh' : '↓ Pull to refresh';
+  }, { passive: false });
+
+  document.addEventListener('touchend', event => {
+    if (!activeTouch) return;
+    const touch = tracked(event.changedTouches);
+    if (!touch) return;
+    const distance = touch.clientY - activeTouch.y;
+    const shouldRefresh = pulling && distance >= threshold;
+    reset(shouldRefresh);
+    if (shouldRefresh) {
+      refreshing = true;
+      hint.textContent = '↻ Refreshing…';
+      // A unique query forces a fresh HTML request even when Safari has cached the page.
+      const next = new URL(window.location.href);
+      next.searchParams.set('_refresh', String(Date.now()));
+      window.location.replace(next.href);
+    } else {
+      hiding = setTimeout(() => document.body.classList.remove('pull-refresh-active'), 160);
+    }
+  }, { passive: true });
+  document.addEventListener('touchcancel', () => reset(), { passive: true });
+
+  // A completed swipe must never accidentally open a timer or communication card.
+  document.addEventListener('click', event => {
+    if (Date.now() < blockClickUntil) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
