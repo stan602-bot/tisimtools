@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c141d">
+<title>Timers | Conor’s TiSiM Tools</title>
+<style>
+* { box-sizing: border-box; }
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+body { margin: 0; min-height: 100vh; min-height: 100dvh; background: radial-gradient(circle at 50% -15%, #243f56 0, #111d2a 46%, #0b131d 100%); color: #f8fbff; }
+main { max-width: 1120px; margin: 0 auto; padding: max(32px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(36px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
+.brand { display: inline-flex; align-items: center; gap: 9px; color: #a8c4dd; font-size: 13px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.brand-dot { width: 13px; height: 13px; border-radius: 5px; background: linear-gradient(145deg, #61d9b0, #63c1e8); box-shadow: 0 0 20px #5ccfae77; }
+h1 { font-size: clamp(2.1rem, 6vw, 4.2rem); letter-spacing: -.045em; margin: 23px 0 10px; line-height: 1.07; }
+.intro { color: #b3c4d2; max-width: 660px; font-size: clamp(1rem, 2vw, 1.18rem); line-height: 1.6; margin: 0 0 30px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: clamp(14px, 2vw, 22px); }
+.card { position: relative; display: flex; flex-direction: column; min-height: 245px; padding: clamp(22px, 3vw, 30px); border-radius: 25px; color: white; text-decoration: none; border: 1px solid #ffffff30; box-shadow: 0 15px 30px #00000023; overflow: hidden; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.card::after { content: ''; position: absolute; width: 250px; height: 250px; border-radius: 50%; right: -125px; top: -130px; border: 34px solid #ffffff18; pointer-events: none; }
+.card:hover, .card:focus-visible { transform: translateY(-4px); border-color: #ffffffa0; box-shadow: 0 20px 45px #00000045; }
+.card:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.card.green { background: linear-gradient(125deg, #1e8e68, #166849); }
+.card.blue { background: linear-gradient(125deg, #256da5, #194a7e); }
+.card.gold { background: linear-gradient(125deg, #bc7a26, #926018); }
+.card.purple { background: linear-gradient(125deg, #8654a5, #573880); }
+.card-eyebrow { font-size: .87rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .9; }
+.card-time { font-size: clamp(3.2rem, 8vw, 5.3rem); font-weight: 850; letter-spacing: -.06em; line-height: 1; margin: 22px 0 4px; }
+.card-unit { font-size: clamp(1.1rem, 2vw, 1.4rem); font-weight: 700; }
+.card-go { font-size: 15px; font-weight: 700; margin-top: auto; padding-top: 18px; }
+.footer { margin: 27px 0 0; color: #9eb0c1; font-size: .9rem; line-height: 1.6; }
+@media (max-width: 650px) {
+ .grid { grid-template-columns: 1fr; }
+ .card { min-height: 180px; border-radius: 21px; }
+ .card-time { margin: 14px 0 4px; }
+}
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+
+.brand{text-decoration:none}
+.back{display:inline-block;margin-top:24px;color:#bdd7ec;font-weight:700;text-underline-offset:4px}
+</style>
+</head>
+<body>
+<main>
+    <a class="brand" href="../" aria-label="Conor’s TiSiM Tools homepage"><span class="brand-dot" aria-hidden="true"></span>Conor’s TiSiM Tools</a>
+    <h1>Choose a countdown</h1>
+    <p class="intro">Four easy-to-use visual countdown boards. Choose your duration, then tap the connected flaps as time passes.</p>
+    <nav class="grid" aria-label="Choose countdown duration">
+        <a class="card green" href="../5min/" aria-label="Open 5 minute countdown"><span class="card-eyebrow">Quick countdown</span><span class="card-time">05</span><span class="card-unit">minutes</span><span class="card-go">Open timer &rarr;</span></a>
+        <a class="card blue" href="../15min/" aria-label="Open 15 minute countdown"><span class="card-eyebrow">Short session</span><span class="card-time">15</span><span class="card-unit">minutes</span><span class="card-go">Open timer &rarr;</span></a>
+        <a class="card gold" href="../30min/" aria-label="Open 30 minute countdown"><span class="card-eyebrow">Half hour</span><span class="card-time">30</span><span class="card-unit">minutes</span><span class="card-go">Open timer &rarr;</span></a>
+        <a class="card purple" href="../1hour/" aria-label="Open 1 hour countdown"><span class="card-eyebrow">Long session</span><span class="card-time">01</span><span class="card-unit">hour</span><span class="card-go">Open timer &rarr;</span></a>
+    </nav>
+    <p class="footer">All timers have pull-to-refresh, a final-minute seconds counter, and a reset when you close the FINISHED flap.</p>
+    <a class="back" href="../">← All tools</a>
+</main>
+</body>
+</html>

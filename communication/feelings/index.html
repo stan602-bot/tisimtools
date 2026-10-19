@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1e293b">
+  <title>My Feelings Board | Conor’s TiSiM Tools</title>
+  <style>
+    :root {
+      --background: #1e293b;
+      --panel: #0f172a;
+      --text: #ffffff;
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --blue: #3b82f6;
+      --green: #22c55e;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--background);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+    }
+
+    button, input { font: inherit; }
+
+    #app {
+      position: relative;
+      display: grid;
+      grid-template-areas: "board thermometer";
+      grid-template-columns: minmax(180px, 1fr) clamp(360px, 44vw, 620px);
+      grid-template-rows: minmax(0, 1fr);
+      width: 100dvw;
+      height: var(--app-height, 100dvh);
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(59,130,246,.10), transparent 32%),
+        var(--background);
+    }
+
+    #board {
+      position: relative;
+      grid-area: board;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #board::before {
+      content: "Drag each person to how they feel";
+      position: absolute;
+      top: 20px;
+      left: 24px;
+      max-width: min(360px, 55vw);
+      color: rgba(255,255,255,.65);
+      font-size: clamp(15px, 1.8vw, 24px);
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    #thermometer-side {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      grid-area: thermometer;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      padding:
+        max(12px, env(safe-area-inset-top))
+        max(16px, env(safe-area-inset-right))
+        max(14px, env(safe-area-inset-bottom))
+        6px;
+      background: linear-gradient(90deg, rgba(30,41,59,.2), var(--background) 14%);
+    }
+
+    #stem-container {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
+    }
+
+    .gauge-row,
+    .green-container {
+      display: grid;
+      grid-template-columns: 62px 38px minmax(150px, 1fr) 84px;
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .gauge-row {
+      flex: 1 1 0;
+      min-height: 0;
+    }
+
+    .face-icon {
+      width: 54px;
+      height: 54px;
+      justify-self: center;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,.25));
+    }
+
+    .face-icon circle,
+    .face-icon path,
+    .face-icon line {
+      vector-effect: non-scaling-stroke;
+    }
+
+    .number {
+      color: white;
+      font-size: clamp(18px, 2.2vw, 27px);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .text-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .text-group {
+      width: 100%;
+      text-align: center;
+    }
+
+    .feeling {
+      font-size: clamp(13px, 1.55vw, 20px);
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .action {
+      margin-top: 3px;
+      font-size: clamp(10px, 1.1vw, 15px);
+      line-height: 1.15;
+      color: rgba(255,255,255,.9);
+    }
+
+    .line {
+      width: 100%;
+      height: 2px;
+      margin-top: 7px;
+      background: white;
+      opacity: .85;
+    }
+
+    .bar-segment {
+      width: 100%;
+      height: calc(100% + 1px);
+      min-height: 0;
+    }
+
+    .red { background: var(--red); border-radius: 26px 26px 0 0; }
+    .orange { background: var(--orange); }
+    .yellow { background: var(--yellow); }
+    .blue { background: var(--blue); }
+
+    .green-container {
+      flex: 0 0 auto;
+      min-height: 140px;
+    }
+
+    .green {
+      width: clamp(125px, 14vw, 175px);
+      aspect-ratio: 1;
+      margin-top: -18px;
+      justify-self: center;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .photo-card {
+      position: absolute;
+      z-index: 1000;
+      width: clamp(70px, 8vw, 100px);
+      aspect-ratio: 1;
+      border: 4px solid white;
+      border-radius: 50%;
+      background-color: #334155;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      box-shadow: 0 5px 12px rgba(0,0,0,.38);
+      cursor: grab;
+      touch-action: none;
+      -webkit-user-drag: none;
+    }
+
+    .photo-card.dragging {
+      cursor: grabbing;
+      transform: scale(1.04);
+      box-shadow: 0 8px 20px rgba(0,0,0,.45);
+    }
+
+    .photo-card.selected {
+      outline: 4px solid rgba(255,255,255,.35);
+      outline-offset: 3px;
+    }
+
+    #controls {
+      position: fixed;
+      z-index: 10000;
+      left: max(14px, env(safe-area-inset-left));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      max-width: calc(100vw - 28px);
+    }
+
+    .control-button {
+      min-height: 44px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 10px;
+      background: var(--panel);
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    }
+
+    .control-button:active { transform: translateY(1px); }
+    .control-button.secondary { background: #334155; }
+    .control-button.danger { background: #7f1d1d; }
+    .control-button[hidden] { display: none; }
+
+    #storage-warning {
+      position: fixed;
+      z-index: 12000;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: min(560px, calc(100vw - 24px));
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #7c2d12;
+      color: white;
+      font-size: 13px;
+      text-align: center;
+      box-shadow: 0 5px 16px rgba(0,0,0,.35);
+    }
+
+    /* Portrait iPads and phones: thermometer on top, open drag area below. */
+    @media (orientation: portrait) {
+      #app {
+        grid-template-areas:
+          "thermometer"
+          "board";
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(350px, 66fr) minmax(170px, 34fr);
+      }
+
+      #thermometer-side {
+        padding:
+          max(8px, env(safe-area-inset-top))
+          max(10px, env(safe-area-inset-right))
+          4px
+          max(4px, env(safe-area-inset-left));
+        background: linear-gradient(180deg, var(--background) 86%, rgba(30,41,59,.45));
+      }
+
+      .gauge-row,
+      .green-container {
+        grid-template-columns: clamp(40px, 9vw, 66px) clamp(24px, 6vw, 40px) minmax(120px, 1fr) clamp(55px, 16vw, 105px);
+        gap: clamp(3px, 1vw, 9px);
+      }
+
+      .green-container { min-height: clamp(82px, 13dvh, 142px); }
+      .green { width: clamp(92px, 24vw, 158px); margin-top: -12px; }
+      .face-icon { width: clamp(38px, 10vw, 58px); height: clamp(38px, 10vw, 58px); }
+      .number { font-size: clamp(16px, 4vw, 25px); }
+      .feeling { font-size: clamp(11px, 2.8vw, 18px); }
+      .action { font-size: clamp(9px, 2.2vw, 14px); }
+
+      #board::before {
+        top: 12px;
+        left: max(14px, env(safe-area-inset-left));
+        max-width: calc(100vw - 28px);
+        font-size: clamp(14px, 3.2vw, 19px);
+      }
+
+      #controls {
+        left: max(12px, env(safe-area-inset-left));
+        bottom: max(12px, env(safe-area-inset-bottom));
+      }
+    }
+
+    /* Landscape tablets and short browser windows. */
+    @media (orientation: landscape) and (max-height: 700px) {
+      #app { grid-template-columns: minmax(150px, 1fr) clamp(330px, 52vw, 600px); }
+      #thermometer-side { padding: 7px max(10px, env(safe-area-inset-right)) 8px 3px; }
+
+      .gauge-row,
+      .green-container {
+        grid-template-columns: clamp(42px, 7vh, 56px) clamp(25px, 5vh, 38px) minmax(110px, 1fr) clamp(58px, 12vh, 88px);
+        gap: 4px;
+      }
+
+      .face-icon { width: clamp(37px, 7.4vh, 52px); height: clamp(37px, 7.4vh, 52px); }
+      .green-container { min-height: clamp(76px, 20vh, 126px); }
+      .green { width: clamp(82px, 20vh, 132px); margin-top: -10px; }
+      .number { font-size: clamp(15px, 3.2vh, 23px); }
+      .feeling { font-size: clamp(10px, 2.5vh, 16px); }
+      .action { font-size: clamp(8px, 2vh, 12px); }
+      .line { margin-top: 4px; }
+      #board::before { top: 12px; left: 14px; font-size: clamp(13px, 2.6vh, 17px); }
+      .control-button { min-height: 38px; padding: 7px 11px; font-size: 12px; }
+    }
+
+    /* Very narrow split-screen mode. */
+    @media (max-width: 520px) {
+      #app { grid-template-rows: minmax(330px, 70fr) minmax(145px, 30fr); }
+      .gauge-row,
+      .green-container {
+        grid-template-columns: 38px 22px minmax(92px, 1fr) 50px;
+        gap: 2px;
+      }
+      .face-icon { width: 35px; height: 35px; }
+      .green-container { min-height: 78px; }
+      .green { width: 82px; }
+      .number { font-size: 15px; }
+      .feeling { font-size: 10px; }
+      .action { font-size: 8px; }
+      .photo-card { width: 64px; }
+      .control-button { padding: 8px 10px; font-size: 12px; }
+    }
+
+    /* Extra-short layouts hide secondary wording before anything overlaps. */
+    @media (max-height: 430px) {
+      .action { display: none; }
+      .line { margin-top: 3px; }
+      #controls { gap: 5px; }
+    }
+
+    @media print {
+      #controls, #board::before, #storage-warning { display: none !important; }
+    }
+
+    .back-to-communication {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <main id="app" aria-label="Interactive feelings thermometer">
+    <section id="board" aria-label="People area"></section>
+
+    <section id="thermometer-side" aria-label="Feelings thermometer">
+      <div id="stem-container">
+        <div class="gauge-row">
+          <svg class="face-icon" viewBox="0 0 100 100" role="img" aria-label="Angry face">
+            <circle cx="50" cy="50" r="45" fill="#ef4444" stroke="#fff" stroke-width="5"/>
+            <line x1="25" y1="33" x2="43" y2="40" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+            <line x1="75" y1="33" x2="57" y2="40" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="35" cy="47" r="5" fill="#fff"/><circle cx="65" cy="47" r="5" fill="#fff"/>
+            <path d="M30 74 Q50 56 70 74" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+          <div class="number">5</div>
+          <div class="text-container">
+            <div class="text-group"><div class="feeling">Feeling angry/overwhelmed</div><div class="action">Go for a walk or drive</div></div>
+            <div class="line"></div>
+          </div>
+          <div class="bar-segment red"></div>
+        </div>
+
+        <div class="gauge-row">
+          <svg class="face-icon" viewBox="0 0 100 100" role="img" aria-label="Upset face">
+            <circle cx="50" cy="50" r="45" fill="#f97316" stroke="#fff" stroke-width="5"/>
+            <circle cx="34" cy="42" r="6" fill="#fff"/><circle cx="66" cy="42" r="6" fill="#fff"/>
+            <path d="M30 72 Q50 55 70 72" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+            <path d="M75 48 C84 59 81 69 74 71 C66 69 65 59 75 48" fill="#60a5fa" stroke="#fff" stroke-width="2"/>
+          </svg>
+          <div class="number">4</div>
+          <div class="text-container">
+            <div class="text-group"><div class="feeling">Feeling upset</div><div class="action">Take a breath</div></div>
+            <div class="line"></div>
+          </div>
+          <div class="bar-segment orange"></div>
+        </div>
+
+        <div class="gauge-row">
+          <svg class="face-icon" viewBox="0 0 100 100" role="img" aria-label="Nervous face">
+            <circle cx="50" cy="50" r="45" fill="#eab308" stroke="#fff" stroke-width="5"/>
+            <circle cx="34" cy="41" r="6" fill="#fff"/><circle cx="66" cy="41" r="6" fill="#fff"/>
+            <path d="M29 68 L39 63 L49 68 L59 63 L71 68" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="number">3</div>
+          <div class="text-container">
+            <div class="text-group"><div class="feeling">Feeling nervous/excited</div><div class="action">Use my iPad</div></div>
+            <div class="line"></div>
+          </div>
+          <div class="bar-segment yellow"></div>
+        </div>
+
+        <div class="gauge-row">
+          <svg class="face-icon" viewBox="0 0 100 100" role="img" aria-label="Okay face">
+            <circle cx="50" cy="50" r="45" fill="#3b82f6" stroke="#fff" stroke-width="5"/>
+            <circle cx="34" cy="42" r="6" fill="#fff"/><circle cx="66" cy="42" r="6" fill="#fff"/>
+            <line x1="33" y1="68" x2="67" y2="68" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+          <div class="number">2</div>
+          <div class="text-container">
+            <div class="text-group"><div class="feeling">Feeling okay?</div><div class="action">Read a book/play with birdies</div></div>
+            <div class="line"></div>
+          </div>
+          <div class="bar-segment blue"></div>
+        </div>
+      </div>
+
+      <div class="green-container">
+        <svg class="face-icon" viewBox="0 0 100 100" role="img" aria-label="Happy face">
+          <circle cx="50" cy="50" r="45" fill="#22c55e" stroke="#fff" stroke-width="5"/>
+          <path d="M27 43 Q34 34 41 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          <path d="M59 43 Q66 34 73 43" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          <path d="M27 59 Q50 83 73 59" fill="#fff" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <div class="number">1</div>
+        <div class="text-container">
+          <div class="text-group"><div class="feeling">Feeling good</div><div class="action">Enjoy my day</div></div>
+          <div class="line"></div>
+        </div>
+        <div class="green"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="controls" aria-label="Board controls">
+    <a class="control-button secondary back-to-communication" href="../" aria-label="Back to communication tools">← Communication</a>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <button class="control-button" id="addButton" type="button">+ Add Person</button>
+    <button class="control-button danger" id="removeButton" type="button" hidden>Remove Selected</button>
+    <button class="control-button secondary" id="clearButton" type="button">Clear All</button>
+  </div>
+
+  <div id="storage-warning" hidden></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'standaloneFeelingBoard.people.v1';
+      const app = document.getElementById('app');
+      const fileInput = document.getElementById('fileInput');
+      const addButton = document.getElementById('addButton');
+      const removeButton = document.getElementById('removeButton');
+      const clearButton = document.getElementById('clearButton');
+      const storageWarning = document.getElementById('storage-warning');
+
+      let people = [];
+      let selectedId = null;
+      let zIndexCounter = 2000;
+
+      function makeId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        return 'person-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+      }
+
+      function showWarning(message) {
+        storageWarning.textContent = message;
+        storageWarning.hidden = false;
+        window.clearTimeout(showWarning.timer);
+        showWarning.timer = window.setTimeout(() => {
+          storageWarning.hidden = true;
+        }, 5000);
+      }
+
+      function savePeople() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
+        } catch (error) {
+          showWarning('The board still works, but this browser could not save the photos permanently.');
+        }
+      }
+
+      function loadPeople() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          people = Array.isArray(saved) ? saved : [];
+        } catch (error) {
+          people = [];
+        }
+      }
+
+      function getPerson(id) {
+        return people.find(person => person.id === id);
+      }
+
+      function selectCard(id) {
+        selectedId = id;
+        document.querySelectorAll('.photo-card').forEach(card => {
+          card.classList.toggle('selected', card.dataset.id === id);
+        });
+        removeButton.hidden = !id;
+      }
+
+      function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(value, maximum));
+      }
+
+      function cardBounds(card) {
+        return {
+          maxX: Math.max(0, app.clientWidth - card.offsetWidth),
+          maxY: Math.max(0, app.clientHeight - card.offsetHeight)
+        };
+      }
+
+      function positionCardFromSavedLocation(card, person) {
+        const bounds = cardBounds(card);
+        let x;
+        let y;
+
+        if (Number.isFinite(person.rx) && Number.isFinite(person.ry)) {
+          x = clamp(person.rx, 0, 1) * bounds.maxX;
+          y = clamp(person.ry, 0, 1) * bounds.maxY;
+        } else {
+          x = clamp(Number(person.x) || 0, 0, bounds.maxX);
+          y = clamp(Number(person.y) || 0, 0, bounds.maxY);
+          person.rx = bounds.maxX ? x / bounds.maxX : 0;
+          person.ry = bounds.maxY ? y / bounds.maxY : 0;
+        }
+
+        card.style.left = `${x}px`;
+        card.style.top = `${y}px`;
+        person.x = x;
+        person.y = y;
+      }
+
+      function createCard(person) {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.dataset.id = person.id;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', 'Person photo. Drag to a feeling level.');
+        card.style.backgroundImage = `url("${person.image.replace(/"/g, '%22')}")`;
+        card.style.left = '0px';
+        card.style.top = '0px';
+        card.style.zIndex = String(person.z || ++zIndexCounter);
+        app.appendChild(card);
+        setupDrag(card);
+        positionCardFromSavedLocation(card, person);
+        return card;
+      }
+
+      function setupDrag(card) {
+        let pointerId = null;
+        let offsetX = 0;
+        let offsetY = 0;
+        let moved = false;
+
+        card.addEventListener('pointerdown', event => {
+          if (event.button !== undefined && event.button !== 0) return;
+          event.preventDefault();
+
+          pointerId = event.pointerId;
+          moved = false;
+          card.setPointerCapture(pointerId);
+          card.classList.add('dragging');
+          selectCard(card.dataset.id);
+
+          zIndexCounter += 1;
+          card.style.zIndex = String(zIndexCounter);
+          const person = getPerson(card.dataset.id);
+          if (person) person.z = zIndexCounter;
+
+          const rect = card.getBoundingClientRect();
+          offsetX = event.clientX - rect.left;
+          offsetY = event.clientY - rect.top;
+        });
+
+        card.addEventListener('pointermove', event => {
+          if (event.pointerId !== pointerId) return;
+          event.preventDefault();
+          moved = true;
+
+          const bounds = cardBounds(card);
+          const newX = clamp(event.clientX - offsetX, 0, bounds.maxX);
+          const newY = clamp(event.clientY - offsetY, 0, bounds.maxY);
+
+          card.style.left = `${newX}px`;
+          card.style.top = `${newY}px`;
+        });
+
+        const finishDrag = event => {
+          if (event.pointerId !== pointerId) return;
+
+          try { card.releasePointerCapture(pointerId); } catch (_) {}
+          pointerId = null;
+          card.classList.remove('dragging');
+
+          const person = getPerson(card.dataset.id);
+          if (person) {
+            const bounds = cardBounds(card);
+            person.x = parseFloat(card.style.left) || 0;
+            person.y = parseFloat(card.style.top) || 0;
+            person.rx = bounds.maxX ? person.x / bounds.maxX : 0;
+            person.ry = bounds.maxY ? person.y / bounds.maxY : 0;
+            person.z = parseInt(card.style.zIndex, 10) || zIndexCounter;
+            savePeople();
+          }
+
+          if (!moved) selectCard(card.dataset.id);
+        };
+
+        card.addEventListener('pointerup', finishDrag);
+        card.addEventListener('pointercancel', finishDrag);
+      }
+
+      function rescueCard(card, saveAfter = true, keepRelative = false) {
+        const person = getPerson(card.dataset.id);
+
+        if (keepRelative && person) {
+          positionCardFromSavedLocation(card, person);
+        } else {
+          const bounds = cardBounds(card);
+          const currentX = parseFloat(card.style.left) || 0;
+          const currentY = parseFloat(card.style.top) || 0;
+          const newX = clamp(currentX, 0, bounds.maxX);
+          const newY = clamp(currentY, 0, bounds.maxY);
+
+          card.style.left = `${newX}px`;
+          card.style.top = `${newY}px`;
+
+          if (person) {
+            person.x = newX;
+            person.y = newY;
+            person.rx = bounds.maxX ? newX / bounds.maxX : 0;
+            person.ry = bounds.maxY ? newY / bounds.maxY : 0;
+          }
+        }
+
+        if (saveAfter) savePeople();
+      }
+
+      function imageFileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error('Could not read image'));
+          reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error('Could not open image'));
+            image.onload = () => {
+              const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
+              const sourceX = (image.naturalWidth - sourceSize) / 2;
+              const sourceY = (image.naturalHeight - sourceSize) / 2;
+              const canvas = document.createElement('canvas');
+              canvas.width = 256;
+              canvas.height = 256;
+              const context = canvas.getContext('2d');
+              context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, 256, 256);
+              resolve(canvas.toDataURL('image/jpeg', 0.84));
+            };
+            image.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function addFiles(files) {
+        const list = Array.from(files || []).filter(file => file.type.startsWith('image/'));
+        for (const file of list) {
+          try {
+            const image = await imageFileToDataUrl(file);
+            const offset = people.length * 12;
+            const startX = clamp(30 + offset, 0, Math.max(0, app.clientWidth - 90));
+            const startY = clamp(70 + offset, 0, Math.max(0, app.clientHeight - 90));
+            const person = {
+              id: makeId(),
+              image,
+              x: startX,
+              y: startY,
+              rx: app.clientWidth > 90 ? startX / (app.clientWidth - 90) : 0,
+              ry: app.clientHeight > 90 ? startY / (app.clientHeight - 90) : 0,
+              z: ++zIndexCounter
+            };
+            people.push(person);
+            createCard(person);
+            selectCard(person.id);
+            savePeople();
+          } catch (error) {
+            showWarning(`Could not add ${file.name || 'that image'}.`);
+          }
+        }
+        fileInput.value = '';
+      }
+
+      function removeSelected() {
+        if (!selectedId) return;
+        const card = Array.from(document.querySelectorAll('.photo-card'))
+          .find(item => item.dataset.id === selectedId);
+        if (card) card.remove();
+        people = people.filter(person => person.id !== selectedId);
+        selectCard(null);
+        savePeople();
+      }
+
+      function clearAll() {
+        if (people.length === 0) return;
+        const confirmed = window.confirm('Remove every person from the board?');
+        if (!confirmed) return;
+        document.querySelectorAll('.photo-card').forEach(card => card.remove());
+        people = [];
+        selectCard(null);
+        savePeople();
+      }
+
+      addButton.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', event => addFiles(event.target.files));
+      removeButton.addEventListener('click', removeSelected);
+      clearButton.addEventListener('click', clearAll);
+
+      app.addEventListener('pointerdown', event => {
+        if (event.target === app || event.target.id === 'board') selectCard(null);
+      });
+
+      function applyViewportSize() {
+        const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', `${Math.round(height)}px`);
+      }
+
+      function adaptToScreen() {
+        applyViewportSize();
+        window.requestAnimationFrame(() => {
+          document.querySelectorAll('.photo-card').forEach(card => rescueCard(card, false, true));
+          savePeople();
+        });
+      }
+
+      applyViewportSize();
+      window.addEventListener('resize', adaptToScreen);
+      window.addEventListener('orientationchange', () => window.setTimeout(adaptToScreen, 120));
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', adaptToScreen);
+      }
+
+      loadPeople();
+      people.forEach(person => {
+        zIndexCounter = Math.max(zIndexCounter, Number(person.z) || 0);
+        createCard(person);
+      });
+    })();
+  </script>
+</body>
+</html>

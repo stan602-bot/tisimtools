@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c141d">
+<title>Communication | Conor’s TiSiM Tools</title>
+<style>
+:root {font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;background:radial-gradient(circle at 50% -10%,#29475f 0,#152435 43%,#0b131d 100%);color:#f5f9fd}
+main{width:min(1100px,100%);margin:0 auto;padding:max(32px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(40px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+.brand{display:inline-flex;align-items:center;gap:9px;color:#a8c4dd;font-size:clamp(12px,1.7vw,15px);font-weight:800;letter-spacing:.09em;text-decoration:none}
+.brand-dot{width:13px;height:13px;border-radius:5px;background:linear-gradient(145deg,#61d9b0,#63c1e8);box-shadow:0 0 20px #5ccfae77}
+h1{font-size:clamp(2.3rem,7vw,4.4rem);line-height:1.05;letter-spacing:-.045em;margin:24px 0 12px}
+.intro{color:#b3c4d2;font-size:clamp(1.03rem,2vw,1.23rem);line-height:1.55;margin:0 0 32px;max-width:710px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,2vw,24px)}
+.card{display:flex;flex-direction:column;min-height:280px;padding:clamp(22px,3vw,34px);border-radius:26px;border:1px solid #ffffff35;color:#fff;text-decoration:none;box-shadow:0 14px 34px #0004;position:relative;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.card:after{content:"";width:240px;height:240px;position:absolute;right:-110px;top:-130px;border:32px solid #ffffff1a;border-radius:50%;pointer-events:none}
+.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:#fff9;box-shadow:0 20px 45px #0006}
+.card:focus-visible{outline:3px solid white;outline-offset:3px}
+.card.teal{background:linear-gradient(135deg,#167e82,#12606b)}
+.card.violet{background:linear-gradient(135deg,#8255ad,#54397d)}
+.card-icon{font-size:clamp(2.8rem,6vw,4.8rem);line-height:1.2;display:block;margin-bottom:20px}
+.card-title{font-size:clamp(1.8rem,3.3vw,2.7rem);font-weight:850;letter-spacing:-.025em}
+.card-description{margin-top:8px;line-height:1.55;max-width:350px;color:#f1f4f9e8;font-size:clamp(.95rem,1.8vw,1.1rem)}
+.card-go{margin-top:auto;padding-top:26px;font-size:1rem;font-weight:800}
+.footer{margin:26px 0 0;color:#9cb1c5;font-size:.94rem;line-height:1.6}
+.back{display:inline-block;margin-top:20px;color:#bdd7ec;font-weight:700;text-underline-offset:4px}
+@media(max-width:660px){.grid{grid-template-columns:1fr}.card{min-height:215px;border-radius:21px}.card-icon{margin-bottom:9px}.card-go{padding-top:15px}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<a class="brand" href="../" aria-label="Conor’s TiSiM Tools homepage"><span class="brand-dot" aria-hidden="true"></span>Conor’s TiSiM Tools</a>
+<h1>Communication</h1>
+<p class="intro">Visual tools for talking about feelings and sharing how you're doing.</p>
+<nav class="grid" aria-label="Communication tools">
+  <a class="card violet" href="./feelings/" aria-label="Open My Feelings Board">
+    <span class="card-icon" aria-hidden="true">😊</span>
+    <span class="card-title">My Feelings Board</span>
+    <span class="card-description">Drag people's photos onto a colour-coded feelings thermometer. Add, move and remove people as needed.</span>
+    <span class="card-go">Open feelings board →</span>
+  </a>
+</nav>
+<p class="footer">Photos added to the board are saved in this browser on this device, not shared between devices.</p>
+<a class="back" href="../">← All tools</a>
+</main>
+</body>
+</html>
