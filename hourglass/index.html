@@ -137,9 +137,9 @@ const upperBands=Array.from({length:6},(_,i)=>el("upperBand"+i));
 const lowerBands=Array.from({length:6},(_,i)=>el("lowerBand"+i));
 const stream=el("sandStream"),grains=Array.from(document.querySelectorAll("#particles .grain"));
 const rainbow=["#c38dff","#62c7f5","#69d8a0","#ffdc61","#ffa95c","#ff6d8e"];
-// The lower pile is never reconstructed in a new order between turns.
-// On the next flip, its colours physically reverse as the chambers exchange places.
-let restingPalette=rainbow.slice().reverse();
+// The lower pile carries its actual SVG colours into the next turn.
+// When turned, its bottom becomes the upper chamber's top.
+let restingPalette=rainbow.slice();
 let pouringPalette=rainbow.slice();
 const status=el("status"),setup=el("setup"),minutes=el("minutes"),seconds=el("seconds"),error=el("error");
 const turn=el("turn"),pause=el("pause"),resume=el("resume"),change=el("change");
@@ -175,9 +175,13 @@ function sand(progress,palette=pouringPalette){
   return "M 140 "+a+" Q 250 "+compact(a-2*mound(a))+" 360 "+a+
     " L 360 "+b+" Q 250 "+compact(b-2*mound(b))+" 140 "+b+" Z";
  }
- // Material order, from bottom of the original upper chamber to top:
- // purple -> blue -> green -> yellow -> orange -> pink.
+ // A palette is ordered from the bottom of the lower chamber up, or from
+ // the neck of the upper chamber up. When the glass flips, reverse that order.
  palette.forEach((colour,i)=>{
+  // Update the ACTUAL SVG fill. Previously the palette changed in JS, but the
+  // paths retained hard-coded colours, making every turn visually identical.
+  upperBands[i].setAttribute("fill",colour);
+  lowerBands[i].setAttribute("fill",colour);
   const start=i/6,end=(i+1)/6;
   const upperLo=Math.max(p,start),upperHi=end;
   upperBands[i].setAttribute("d",upperHi>upperLo+1e-9
