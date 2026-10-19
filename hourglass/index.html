@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101b2a">
 <title>Custom Hourglass | Conor’s TiSiM Tools</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -81,12 +82,26 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 <stop offset="100%" stop-color="#c38dff"/>
 </linearGradient>
 <clipPath id="upperClip"><path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z"/></clipPath>
+<!-- Clip the FIXED coloured bands from the neck UPWARDS. Never crop the
+     top rows first: purple, then blue, then green, yellow, orange, pink. -->
+<clipPath id="upperSandWindow"><rect id="topSand" x="144" y="118" width="212" height="0"/></clipPath>
 <clipPath id="lowerClip"><path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z"/></clipPath>
 </defs>
 <path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <g id="sand">
-<rect id="topSand" x="144" y="118" width="212" height="0" fill="url(#topRainbow)" clip-path="url(#upperClip)"/>
+<!-- Explicit separate rainbow layers, not a stretched gradient:
+     pink is at the very top; purple is beside the neck. -->
+<g id="upperRainbow" clip-path="url(#upperClip)">
+  <g id="upperRainbowRemaining" clip-path="url(#upperSandWindow)">
+    <rect x="144" y="118" width="212" height="28.17" fill="#ff6d8e"/>
+    <rect x="144" y="146.17" width="212" height="28.17" fill="#ffa95c"/>
+    <rect x="144" y="174.34" width="212" height="28.17" fill="#ffdc61"/>
+    <rect x="144" y="202.51" width="212" height="28.17" fill="#69d8a0"/>
+    <rect x="144" y="230.68" width="212" height="28.17" fill="#62c7f5"/>
+    <rect x="144" y="258.85" width="212" height="28.15" fill="#c38dff"/>
+  </g>
+</g>
 <rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#bottomRainbow)" clip-path="url(#lowerClip)"/>
 <!-- Stream length is updated each frame to reach the current lower sand surface. -->
 <g id="particles" aria-hidden="true">
@@ -152,8 +167,8 @@ function sand(progress){
  // which previously made the lower chamber look almost full far too soon.
  const p=Math.max(0,Math.min(1,progress));
  const upper=169*(1-p),lower=168*p;
- // Keep the surface of the top sand fixed at the top lip; drain away
- // from the narrow neck (bottom of this chamber) upwards.
+ // Crop only the purple/blue/lower layers as the level retreats upwards.
+ // The six color bands NEVER change position or get rescaled by SVG.
  topSand.setAttribute("y","118");topSand.setAttribute("height",String(upper));
  const sandSurface=462-lower;
  bottomSand.setAttribute("y",String(sandSurface));bottomSand.setAttribute("height",String(lower));
