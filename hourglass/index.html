@@ -86,7 +86,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 <path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <g id="sand">
-<rect id="topSand" x="144" y="287" width="212" height="0" fill="url(#topRainbow)" clip-path="url(#upperClip)"/>
+<rect id="topSand" x="144" y="118" width="212" height="0" fill="url(#topRainbow)" clip-path="url(#upperClip)"/>
 <rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#bottomRainbow)" clip-path="url(#lowerClip)"/>
 <!-- Stream length is updated each frame to reach the current lower sand surface. -->
 <g id="particles" aria-hidden="true">
@@ -152,7 +152,9 @@ function sand(progress){
  // which previously made the lower chamber look almost full far too soon.
  const p=Math.max(0,Math.min(1,progress));
  const upper=169*(1-p),lower=168*p;
- topSand.setAttribute("y",String(287-upper));topSand.setAttribute("height",String(upper));
+ // Keep the surface of the top sand fixed at the top lip; drain away
+ // from the narrow neck (bottom of this chamber) upwards.
+ topSand.setAttribute("y","118");topSand.setAttribute("height",String(upper));
  const sandSurface=462-lower;
  bottomSand.setAttribute("y",String(sandSurface));bottomSand.setAttribute("height",String(lower));
  // Let the stream reach the actual sand surface, even at the start.
