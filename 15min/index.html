@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>15 Minutes to Go | TiSiM Tools</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; }
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+.board {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    background: #222; 
+    border: 4px solid #222;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+.header {
+    flex: 0 0 auto;
+    text-align: center;
+    padding: clamp(8px, 1.5dvh, 18px) 12px;
+    background: #2c2c2c;
+    color: white;
+    border-bottom: 2px solid #333;
+}
+
+/* Pull-to-refresh feedback floats over the connected countdown board. */
+.pull-indicator {
+    position: fixed;
+    z-index: 20;
+    top: max(14px, calc(env(safe-area-inset-top) + 10px));
+    left: 50%;
+    transform: translate(-50%, -12px);
+    opacity: 0;
+    pointer-events: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(30, 30, 30, 0.96);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, 0.25);
+    font: 600 14px Arial, sans-serif;
+    white-space: nowrap;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+body.is-pulling .pull-indicator {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+.board { transition: transform 0.15s ease-out; }
+body.is-pulling .board { transition: none; }
+
+/* Keep the original header and all five flaps in one connected panel. */
+.header .pointing-hand { font-size: clamp(20px, 4dvh, 36px); line-height: 1; margin-bottom: 5px; }
+.header h2 { margin: 7px 0 4px; font-size: clamp(16px, 2.6dvh, 28px); }
+.header p { margin: 0; color: #aaa; font-size: clamp(11px, 1.6dvh, 16px); }
+
+/* --- New CSS Glowing Lights Styles --- */
+.lights-container {
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 2dvh, 20px);
+    margin: clamp(5px, 1dvh, 10px) 0;
+}
+.light {
+    width: clamp(13px, 2dvh, 22px);
+    height: clamp(13px, 2dvh, 22px);
+    border-radius: 50%;
+    background: #444; /* Default "Off" state (Dim dark grey) */
+    transition: background 0.6s ease, box-shadow 0.6s ease;
+    border: 1px solid #111;
+}
+/* Glowing "On" States */
+.light.glow-green {
+    background: #2ecc71;
+    box-shadow: 0 0 12px #2ecc71, inset 0 0 4px rgba(255,255,255,0.6);
+}
+.light.glow-yellow {
+    background: #f1c40f;
+    box-shadow: 0 0 12px #f1c40f, inset 0 0 4px rgba(255,255,255,0.6);
+}
+.light.glow-red {
+    background: #e74c3c;
+    box-shadow: 0 0 12px #e74c3c, inset 0 0 4px rgba(255,255,255,0.6);
+}
+
+.flap {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    border-bottom: 2px solid #222;
+    perspective: 1000px; 
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.flap:focus-visible { outline: 3px solid white; outline-offset: -5px; z-index: 4; }
+.flap:last-child {
+    border-bottom: none;
+}
+.content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #222;
+    user-select: none;
+}
+.content .number {
+    font-size: clamp(23px, 7.6dvh, 100px);
+    line-height: 1;
+    font-weight: 900;
+}
+.content .text {
+    font-size: clamp(10px, 1.8dvh, 21px);
+    line-height: 1.1;
+    margin-top: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+.cover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(28px, 9dvh, 105px);
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    user-select: none;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.8s;
+    transform-origin: left center;
+    backface-visibility: hidden; 
+    z-index: 2;
+}
+.cover.open {
+    transform: rotateY(-140deg);
+    box-shadow: 5px 0 15px rgba(0,0,0,0.4);
+}
+
+/* Keep the FINISHED message readable on short landscape screens. */
+.f-fin .number { font-size: clamp(19px, 5dvh, 72px); }
+@media (max-height: 480px) {
+    .header .pointing-hand { display: none; }
+    .header { padding: 5px 10px; }
+    .header h2 { margin: 4px 0 2px; }
+    .header .lights-container { margin: 3px 0; }
+    .content .text { margin-top: 1px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cover, .light { transition-duration: .01ms; }
+}
+/* --- Dynamic Color Schemes --- */
+.f-4 .content { background: #e8f8f5; color: #1e8449; }
+.f-4 .cover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+
+.f-3 .content { background: #ebf5fb; color: #21618c; }
+.f-3 .cover { background: linear-gradient(135deg, #3498db, #2980b9); }
+
+.f-2 .content { background: #fef9e7; color: #b7950b; }
+.f-2 .cover { background: linear-gradient(135deg, #f1c40f, #d4ac0d); }
+
+.f-1 .content { background: #fdf2e9; color: #a04000; }
+.f-1 .cover { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+.f-fin .content { background: #f5eef8; color: #6c3483; }
+.f-fin .cover { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+
+/* Return to the timer chooser without separating or moving the five flaps. */
+.header { position: relative; }
+.all-timers { position: absolute; top: 7px; left: 8px; display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 5px 9px; border-radius: 12px; background: #ffffff13; border: 1px solid #ffffff28; color: #fff; font: 600 clamp(11px,1.4dvh,14px) Arial,sans-serif; text-decoration: none; z-index: 3; }
+.all-timers:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div id="pull-indicator" class="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div>
+<div class="board">
+    <div class="header">
+        <a href="../" class="all-timers" aria-label="Back to all timers">← Timers</a>
+        <div class="pointing-hand">👇</div>
+        
+        <div class="lights-container" aria-label="Timer lights: green after 5 minutes, yellow after 10 minutes, red after 15 minutes">
+            <div class="light" id="light1"></div>
+            <div class="light" id="light2"></div>
+            <div class="light" id="light3"></div>
+        </div>
+
+        <h2>15 Minute Countdown</h2>
+        <p>Tap a flap to open or close it!</p>
+    </div>
+
+    <div class="flap f-4" role="button" tabindex="0" aria-pressed="false" aria-label="Open 10 minutes to go">
+        <div class="content">
+            <div class="number">10</div>
+            <div class="text">minutes to go</div>
+        </div>
+        <div class="cover">✓</div>
+    </div>
+
+    <div class="flap f-3" role="button" tabindex="0" aria-pressed="false" aria-label="Open 5 minutes to go">
+        <div class="content">
+            <div class="number">5</div>
+            <div class="text">minutes to go</div>
+        </div>
+        <div class="cover">✓</div>
+    </div>
+
+    <div class="flap f-2" role="button" tabindex="0" aria-pressed="false" aria-label="Open 2 minutes to go">
+        <div class="content">
+            <div class="number">2</div>
+            <div class="text">minutes to go</div>
+        </div>
+        <div class="cover">✓</div>
+    </div>
+
+    <div class="flap f-1" role="button" tabindex="0" aria-pressed="false" aria-label="Open 1 minute to go">
+        <div class="content">
+            <div class="number">1</div>
+            <div class="text">minute to go</div>
+        </div>
+        <div class="cover">✓</div>
+    </div>
+
+    <div class="flap f-fin" role="button" tabindex="0" aria-pressed="false" aria-label="Open finished">
+        <div class="content">
+            <div class="number">FINISHED 🎉</div>
+            <div class="text">Countdown complete</div>
+        </div>
+        <div class="cover">✓</div>
+    </div>
+</div>
+
+<script>
+// Lights track actual elapsed time, even when a phone suspends background timers.
+const lights = [
+    document.getElementById('light1'),
+    document.getElementById('light2'),
+    document.getElementById('light3')
+];
+const thresholds = [300, 600, 900];
+const colours = ['glow-green', 'glow-yellow', 'glow-red'];
+const flaps = document.querySelectorAll('.flap');
+const minuteFlap = document.querySelector('.f-1');
+const minuteNumber = minuteFlap.querySelector('.number');
+const minuteText = minuteFlap.querySelector('.text');
+let startedAt = Date.now();
+let minuteDeadline = null;
+let minuteInterval = null;
+let minuteResetTimeout = null;
+
+function updateLights() {
+    const seconds = Math.floor((Date.now() - startedAt) / 1000);
+    lights.forEach((light, i) => {
+        light.classList.toggle(colours[i], seconds >= thresholds[i]);
+    });
+}
+
+function cancelMinuteTimer() {
+    clearInterval(minuteInterval);
+    clearTimeout(minuteResetTimeout);
+    minuteInterval = null;
+    minuteResetTimeout = null;
+    minuteDeadline = null;
+}
+
+function resetMinuteText() {
+    minuteNumber.textContent = '1';
+    minuteText.textContent = 'minute to go';
+}
+
+function updateMinuteTimer() {
+    if (minuteDeadline === null) return;
+    const seconds = Math.max(0, Math.ceil((minuteDeadline - Date.now()) / 1000));
+    minuteNumber.textContent = seconds;
+    minuteText.textContent = seconds === 1 ? 'second to go' : 'seconds to go';
+    if (seconds === 0) {
+        clearInterval(minuteInterval);
+        minuteInterval = null;
+        minuteDeadline = null;
+        minuteText.textContent = 'Open FINISHED 🎉';
+        // Close the last-minute flap again after the completion message.
+        minuteResetTimeout = setTimeout(() => {
+            const cover = minuteFlap.querySelector('.cover');
+            cover.classList.remove('open');
+            minuteFlap.setAttribute('aria-pressed', 'false');
+            minuteFlap.setAttribute('aria-label', 'Open 1 minute to go');
+            resetMinuteText();
+            minuteResetTimeout = null;
+        }, 2500);
+    }
+}
+
+function toggleFlap(flap) {
+    const cover = flap.querySelector('.cover');
+    const isOpen = cover.classList.toggle('open');
+    flap.setAttribute('aria-pressed', String(isOpen));
+    // Closing FINISHED resets every flap, all lights and the countdown timer.
+    if (flap.classList.contains('f-fin') && !isOpen) {
+        restartCountdown();
+        return;
+    }
+    const number = flap.querySelector('.number').textContent.trim();
+    flap.setAttribute('aria-label', `${isOpen ? 'Close' : 'Open'} ${flap.classList.contains('f-fin') ? 'finished' : number + (number === '1' ? ' minute' : ' minutes') + ' to go'}`);
+
+    if (flap === minuteFlap) {
+        cancelMinuteTimer();
+        if (isOpen) {
+            minuteDeadline = Date.now() + 60_000;
+            updateMinuteTimer();
+            minuteInterval = setInterval(updateMinuteTimer, 250);
+        } else {
+            resetMinuteText();
+        }
+    }
+}
+
+let ignoreTouchClicksUntil = 0;
+flaps.forEach(flap => {
+    flap.addEventListener('click', () => {
+        if (Date.now() < ignoreTouchClicksUntil) return;
+        toggleFlap(flap);
+    });
+    flap.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleFlap(flap);
+        }
+    });
+});
+
+function restartCountdown() {
+    startedAt = Date.now();
+    cancelMinuteTimer();
+    resetMinuteText();
+    flaps.forEach(flap => {
+        flap.querySelector('.cover').classList.remove('open');
+        flap.setAttribute('aria-pressed', 'false');
+        const text = flap.classList.contains('f-fin')
+            ? 'finished'
+            : flap.querySelector('.number').textContent.trim() + (flap.classList.contains('f-1') ? ' minute' : ' minutes') + ' to go';
+        flap.setAttribute('aria-label', 'Open ' + text);
+    });
+    updateLights();
+}
+
+// A full-screen board cannot scroll, so implement the familiar mobile
+// pull-to-refresh gesture without opening or closing a flap accidentally.
+const board = document.querySelector('.board');
+const pullIndicator = document.getElementById('pull-indicator');
+const pullThreshold = 100;
+let pullStart = null;
+let activeTouchId = null;
+let isPulling = false;
+let refreshInProgress = false;
+
+function resetPullGesture() {
+    pullStart = null;
+    activeTouchId = null;
+    isPulling = false;
+    document.body.classList.remove('is-pulling');
+    board.style.transform = '';
+    pullIndicator.textContent = '↓ Pull to refresh';
+}
+
+function getTrackedTouch(touches) {
+    return Array.from(touches).find(touch => touch.identifier === activeTouchId);
+}
+
+document.addEventListener('touchstart', event => {
+    if (refreshInProgress || event.touches.length !== 1 || !event.target.closest('.board')) return;
+    const touch = event.touches[0];
+    activeTouchId = touch.identifier;
+    pullStart = { x: touch.clientX, y: touch.clientY };
+    isPulling = false;
+}, { passive: true });
+
+document.addEventListener('touchmove', event => {
+    if (!pullStart || refreshInProgress || event.touches.length !== 1) return;
+    const touch = getTrackedTouch(event.touches);
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - pullStart.x);
+    const dy = touch.clientY - pullStart.y;
+    if (!isPulling) {
+        if (dy <= 10 || dy < dx * 1.2) return;
+        isPulling = true;
+        document.body.classList.add('is-pulling');
+    }
+    // Suppress native overscroll/bounce and click generation during a pull.
+    if (event.cancelable) event.preventDefault();
+    ignoreTouchClicksUntil = Date.now() + 500;
+    const distance = Math.max(0, dy);
+    board.style.transform = `translateY(${Math.min(55, distance * 0.32)}px)`;
+    pullIndicator.textContent = distance >= pullThreshold
+        ? '↻ Release to refresh' : '↓ Pull to refresh';
+}, { passive: false });
+
+document.addEventListener('touchend', event => {
+    if (!pullStart) return;
+    const touch = getTrackedTouch(event.changedTouches);
+    if (!touch) return;
+    const dy = touch.clientY - pullStart.y;
+    const shouldRefresh = isPulling && dy >= pullThreshold;
+    resetPullGesture();
+    if (shouldRefresh && !refreshInProgress) {
+        refreshInProgress = true;
+        pullIndicator.textContent = '↻ Refreshing…';
+        document.body.classList.add('is-pulling');
+        // Reload the webpage itself; this also resets all flaps and lights.
+        window.location.reload();
+    }
+}, { passive: true });
+
+document.addEventListener('touchcancel', resetPullGesture, { passive: true });
+
+setInterval(() => {
+    updateLights();
+    updateMinuteTimer();
+}, 250);
+document.addEventListener('visibilitychange', () => {
+    updateLights();
+    updateMinuteTimer();
+});
+window.addEventListener('pageshow', event => {
+    if (event.persisted) restartCountdown();
+    else updateLights();
+});
+updateLights();
+</script>
+
+</body>
+</html>
