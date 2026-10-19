@@ -246,6 +246,33 @@
     .control-button.danger { background: #7f1d1d; }
     .control-button[hidden] { display: none; }
 
+    /* A compact backup menu avoids covering the board on smaller iPhones. */
+    .backup-menu { position: relative; }
+    .backup-menu summary {
+      display: flex;
+      align-items: center;
+      list-style: none;
+    }
+    .backup-menu summary::-webkit-details-marker { display: none; }
+    .backup-menu[open] summary { background: #475569; }
+    .backup-actions {
+      position: absolute;
+      z-index: 10001;
+      right: 0;
+      bottom: calc(100% + 10px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: min(275px, calc(100vw - 28px));
+      padding: 12px;
+      border: 1px solid #64748b;
+      border-radius: 14px;
+      background: #0f172a;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    }
+    .backup-actions .control-button { width: 100%; text-align: left; }
+    .backup-help { margin: 2px 0 0; color: #cbd5e1; font-size: 12px; line-height: 1.35; }
+
     #storage-warning {
       position: fixed;
       z-index: 12000;
@@ -456,6 +483,15 @@
     <button class="control-button" id="addButton" type="button">+ Add Person</button>
     <button class="control-button danger" id="removeButton" type="button" hidden>Remove Selected</button>
     <button class="control-button secondary" id="clearButton" type="button">Clear All</button>
+    <details class="backup-menu" id="backupMenu">
+      <summary class="control-button secondary">💾 Backup ▾</summary>
+      <div class="backup-actions">
+        <button class="control-button" id="exportBackupButton" type="button">↓ Export Board</button>
+        <button class="control-button secondary" id="importBackupButton" type="button">↑ Import Board</button>
+        <p class="backup-help">Includes all processed photos and their positions. Keep your backup file private.</p>
+      </div>
+    </details>
+    <input type="file" id="backupFileInput" accept=".json,application/json" hidden>
   </div>
 
   <div id="storage-warning" hidden></div>
@@ -470,6 +506,11 @@
       const addButton = document.getElementById('addButton');
       const removeButton = document.getElementById('removeButton');
       const clearButton = document.getElementById('clearButton');
+      const backupMenu = document.getElementById('backupMenu');
+      const exportBackupButton = document.getElementById('exportBackupButton');
+      const importBackupButton = document.getElementById('importBackupButton');
+      const backupFileInput = document.getElementById('backupFileInput');
+      const BACKUP_FORMAT = 'conors-tisim-feelings-board';
       const storageWarning = document.getElementById('storage-warning');
 
       let people = [];
@@ -730,6 +771,124 @@
         selectCard(null);
         savePeople();
       }
+
+
+      // Backup files contain processed images and saved locations, never the original full-size uploads.
+      function exportBoard() {
+        const backup = {
+          format: BACKUP_FORMAT,
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          people: people.map(person => ({
+            id: person.id,
+            image: person.image,
+            x: person.x,
+            y: person.y,
+            rx: person.rx,
+            ry: person.ry,
+            z: person.z
+          }))
+        };
+        const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'conors-tisim-feelings-board-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        backupMenu.open = false;
+        // Delay revocation for Safari/iOS, where downloads can start asynchronously.
+        window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+
+      function validateBackup(data) {
+        if (!data || data.format !== BACKUP_FORMAT || data.version !== 1 ||
+            !Array.isArray(data.people) || data.people.length > 100) {
+          throw new Error('This is not a valid Conor\u2019s TiSiM Tools Feelings Board backup.');
+        }
+        const ids = new Set();
+        return data.people.map((source, index) => {
+          const image = source && source.image;
+          if (typeof image !== 'string' || image.length > 1500000 ||
+              !/^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/]+={0,2}$/i.test(image)) {
+            throw new Error('Photo ' + (index + 1) + ' in the backup is missing or invalid.');
+          }
+          let id = typeof source.id === 'string' && source.id.length <= 120 && source.id
+            ? source.id : makeId();
+          while (ids.has(id)) id = makeId();
+          ids.add(id);
+          const numeric = (value, fallback) =>
+            typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+          return {
+            id,
+            image,
+            x: Math.max(0, numeric(source.x, 30)),
+            y: Math.max(0, numeric(source.y, 70)),
+            rx: clamp(numeric(source.rx, 0.1), 0, 1),
+            ry: clamp(numeric(source.ry, 0.1), 0, 1),
+            z: Math.max(1, numeric(source.z, 2000 + index))
+          };
+        });
+      }
+
+      function checkImportedImages(imported) {
+        return Promise.all(imported.map(person => new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error('A photo in this backup could not be opened.'));
+          image.src = person.image;
+        })));
+      }
+
+      async function importBoard(file) {
+        if (!file) return;
+        try {
+          if (file.size > 20 * 1024 * 1024) {
+            throw new Error('That backup is too large to open safely on this device.');
+          }
+          const imported = validateBackup(JSON.parse(await file.text()));
+          await checkImportedImages(imported);
+          const question = people.length
+            ? 'Replace the current board (' + people.length + ' photos) with the ' +
+              imported.length + ' photos in this backup? Export your current board first if you want to keep it.'
+            : 'Restore ' + imported.length + ' photos from this backup?';
+          if (!window.confirm(question)) return;
+
+          // Save the replacement BEFORE changing the visible board. Quota errors leave
+          // the previous photos and positions untouched, including after a reload.
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+          } catch (error) {
+            throw new Error('Not enough browser storage to restore this backup. Your existing board has not changed.');
+          }
+          document.querySelectorAll('.photo-card').forEach(card => card.remove());
+          people = imported;
+          zIndexCounter = 2000;
+          people.forEach(person => {
+            zIndexCounter = Math.max(zIndexCounter, person.z);
+            createCard(person);
+          });
+          selectCard(null);
+          backupMenu.open = false;
+          window.alert('Board restored: ' + people.length + ' photos and their saved positions.');
+        } catch (error) {
+          window.alert(error && error.message
+            ? error.message
+            : 'Unable to open that backup. Your existing board has not changed.');
+        }
+      }
+
+      exportBackupButton.addEventListener('click', exportBoard);
+      importBackupButton.addEventListener('click', () => backupFileInput.click());
+      backupFileInput.addEventListener('change', async event => {
+        const file = event.target.files && event.target.files[0];
+        try { await importBoard(file); }
+        finally { backupFileInput.value = ''; }
+      });
+      document.addEventListener('pointerdown', event => {
+        if (backupMenu.open && !backupMenu.contains(event.target)) backupMenu.open = false;
+      });
 
       addButton.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', event => addFiles(event.target.files));
