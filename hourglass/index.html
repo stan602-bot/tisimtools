@@ -137,6 +137,10 @@ const upperBands=Array.from({length:6},(_,i)=>el("upperBand"+i));
 const lowerBands=Array.from({length:6},(_,i)=>el("lowerBand"+i));
 const stream=el("sandStream"),grains=Array.from(document.querySelectorAll("#particles .grain"));
 const rainbow=["#c38dff","#62c7f5","#69d8a0","#ffdc61","#ffa95c","#ff6d8e"];
+// The lower pile is never reconstructed in a new order between turns.
+// On the next flip, its colours physically reverse as the chambers exchange places.
+let restingPalette=rainbow.slice().reverse();
+let pouringPalette=rainbow.slice();
 const status=el("status"),setup=el("setup"),minutes=el("minutes"),seconds=el("seconds"),error=el("error");
 const turn=el("turn"),pause=el("pause"),resume=el("resume"),change=el("change");
 let state="ready",angle=0,duration=120000,remaining=duration,deadline=0,raf=0,flipTimer=0,token=0;
@@ -149,7 +153,7 @@ function show(){
   change.hidden=state==="ready"||state==="turning";
   turn.textContent=state==="finished"?"↻ Turn Again":"↻ Turn Hourglass";
 }
-function sand(progress){
+function sand(progress,palette=pouringPalette){
  const p=Math.max(0,Math.min(1,progress));
  const compact=n=>Math.round(n*100)/100;
  // The two triangular chambers have different visible heights for the same
@@ -173,7 +177,7 @@ function sand(progress){
  }
  // Material order, from bottom of the original upper chamber to top:
  // purple -> blue -> green -> yellow -> orange -> pink.
- rainbow.forEach((colour,i)=>{
+ palette.forEach((colour,i)=>{
   const start=i/6,end=(i+1)/6;
   const upperLo=Math.max(p,start),upperHi=end;
   upperBands[i].setAttribute("d",upperHi>upperLo+1e-9
@@ -185,7 +189,7 @@ function sand(progress){
  const surface=lowerY(p)-mound(lowerY(p));
  // The thin coloured stream really touches the apex of the growing pile.
  stream.setAttribute("y2",String(compact(surface+1)));
- const activeColor=rainbow[Math.min(5,Math.floor(Math.max(0,p-0.000001)*6))];
+ const activeColor=palette[Math.min(5,Math.floor(Math.max(0,p-0.000001)*6))];
  stream.setAttribute("stroke",activeColor);
  const distance=Math.max(0,surface-290);
  const cycle=(Date.now()%800)/800;
@@ -200,9 +204,16 @@ function stop(){
  token++;clearTimeout(flipTimer);cancelAnimationFrame(raf);
  raf=0;flipTimer=0;deadline=0;visual.classList.remove("running");
 }
+function renderRestingPose(){
+ // Ready and finished use precisely the same physical pile and glass angle.
+ // Don't flip back or silently revert the settled colours.
+ visual.classList.remove("running");
+ sand(1,restingPalette);
+}
 function finished(){
  state="finished";remaining=0;deadline=0;raf=0;
- visual.classList.remove("running");sand(1);
+ restingPalette=pouringPalette.slice();
+ renderRestingPose();
  status.textContent="All the sand has fallen!";
  show();
  // No automatic rotation or resetting at completion.
@@ -226,6 +237,9 @@ function start(){
   if(value===null){error.textContent="Please enter 1 second to 180 minutes 59 seconds.";error.hidden=false;return}
   duration=value;error.hidden=true;
  }
+ // Turning a finished (or ready) glass reverses the physical stack:
+ // the topmost colour in the lower chamber is the first to pour next.
+ pouringPalette=restingPalette.slice().reverse();
  stop();remaining=duration;state="turning";show();status.textContent="Turning the hourglass…";
  angle+=180;rotator.style.transform="rotate("+angle+"deg)";
  const current=token;
@@ -233,7 +247,7 @@ function start(){
   if(current!==token||state!=="turning")return;
   // Sand rotates naturally with the glass, then stays upright to flow down.
   sandLayer.style.transform="rotate("+(-angle)+"deg)";
-  sand(0);state="running";deadline=Date.now()+remaining;
+  sand(0,pouringPalette);state="running";deadline=Date.now()+remaining;
   visual.classList.add("running");status.textContent="Sand is flowing…";
   show();tick();
  },prefersReducedMotion.matches?25:990);
@@ -250,7 +264,7 @@ function proceed(){
  status.textContent="Sand is flowing…";show();tick();
 }
 function editTime(){
- stop();state="ready";sand(1);remaining=duration;status.textContent="Ready to turn";show();
+ stop();state="ready";renderRestingPose();remaining=duration;status.textContent="Ready to turn";show();
 }
 turn.addEventListener("click",start);
 pause.addEventListener("click",hold);
@@ -265,7 +279,7 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow",event=>{
  if(event.persisted&&state==="running"){cancelAnimationFrame(raf);tick()}
 });
-sand(1);show();
+renderRestingPose();show();
 })();
 </script>
 </body></html>
