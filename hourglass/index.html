@@ -56,63 +56,47 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 <div class="visual" id="visual"><div class="rotator" id="rotator">
 <svg viewBox="0 0 500 580" role="img" aria-labelledby="glassTitle glassDesc">
 <title id="glassTitle">Sand hourglass</title>
-<desc id="glassDesc">Multicoloured sand gradually pours from the top to the bottom chamber, with the stream touching the surface of the sand below.</desc>
+<desc id="glassDesc">Rainbow sand forms a natural funnel toward the neck, streams into the growing pile below, and stays in the lower glass when finished.</desc>
 <defs>
 <linearGradient id="wood"><stop stop-color="#8a5b2b"/><stop offset=".28" stop-color="#eac381"/><stop offset=".72" stop-color="#af753b"/><stop offset="1" stop-color="#764825"/></linearGradient>
-<!-- Six distinct rainbow bands, fixed relative to each glass chamber. -->
-<linearGradient id="topRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="118" x2="0" y2="287">
-<stop offset="0%" stop-color="#ff6d8e"/><stop offset="16.6%" stop-color="#ff6d8e"/>
-<stop offset="16.7%" stop-color="#ffa95c"/><stop offset="33.3%" stop-color="#ffa95c"/>
-<stop offset="33.4%" stop-color="#ffdc61"/><stop offset="50%" stop-color="#ffdc61"/>
-<stop offset="50.1%" stop-color="#69d8a0"/><stop offset="66.6%" stop-color="#69d8a0"/>
-<stop offset="66.7%" stop-color="#62c7f5"/><stop offset="83.3%" stop-color="#62c7f5"/>
-<stop offset="83.4%" stop-color="#c38dff"/><stop offset="100%" stop-color="#c38dff"/>
-</linearGradient>
-<linearGradient id="bottomRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="462" x2="0" y2="294">
-<stop offset="0%" stop-color="#c38dff"/><stop offset="16.6%" stop-color="#c38dff"/>
-<stop offset="16.7%" stop-color="#62c7f5"/><stop offset="33.3%" stop-color="#62c7f5"/>
-<stop offset="33.4%" stop-color="#69d8a0"/><stop offset="50%" stop-color="#69d8a0"/>
-<stop offset="50.1%" stop-color="#ffdc61"/><stop offset="66.6%" stop-color="#ffdc61"/>
-<stop offset="66.7%" stop-color="#ffa95c"/><stop offset="83.3%" stop-color="#ffa95c"/>
-<stop offset="83.4%" stop-color="#ff6d8e"/><stop offset="100%" stop-color="#ff6d8e"/>
-</linearGradient>
-<linearGradient id="pourRainbow" gradientUnits="userSpaceOnUse" x1="0" y1="290" x2="0" y2="462">
-<stop offset="0%" stop-color="#ff6d8e"/><stop offset="25%" stop-color="#ffdc61"/>
-<stop offset="50%" stop-color="#69d8a0"/><stop offset="75%" stop-color="#62c7f5"/>
-<stop offset="100%" stop-color="#c38dff"/>
-</linearGradient>
 <clipPath id="upperClip"><path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z"/></clipPath>
-<!-- Clip the FIXED coloured bands from the neck UPWARDS. Never crop the
-     top rows first: purple, then blue, then green, yellow, orange, pink. -->
-<clipPath id="upperSandWindow"><rect id="topSand" x="144" y="118" width="212" height="0"/></clipPath>
 <clipPath id="lowerClip"><path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z"/></clipPath>
 </defs>
 <path d="M172 118 Q152 118 152 144 C152 204 238 274 250 287 C262 274 348 204 348 144 Q348 118 328 118 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <path d="M250 293 C238 306 152 376 152 436 Q152 462 172 462 H328 Q348 462 348 436 C348 376 262 306 250 293 Z" fill="#dff4ff16" stroke="#c5e7fb" stroke-width="6"/>
 <g id="sand">
-<!-- Explicit separate rainbow layers, not a stretched gradient:
-     pink is at the very top; purple is beside the neck. -->
-<g id="upperRainbow" clip-path="url(#upperClip)">
-  <g id="upperRainbowRemaining" clip-path="url(#upperSandWindow)">
-    <rect x="144" y="118" width="212" height="28.17" fill="#ff6d8e"/>
-    <rect x="144" y="146.17" width="212" height="28.17" fill="#ffa95c"/>
-    <rect x="144" y="174.34" width="212" height="28.17" fill="#ffdc61"/>
-    <rect x="144" y="202.51" width="212" height="28.17" fill="#69d8a0"/>
-    <rect x="144" y="230.68" width="212" height="28.17" fill="#62c7f5"/>
-    <rect x="144" y="258.85" width="212" height="28.15" fill="#c38dff"/>
-  </g>
+<!-- Each band occupies the actual tapered area that remains, so the top
+     pile ALWAYS reaches the central neck rather than floating above it. -->
+<g id="upperLayers" clip-path="url(#upperClip)">
+<path id="upperBand0" fill="#c38dff" d=""/>
+<path id="upperBand1" fill="#62c7f5" d=""/>
+<path id="upperBand2" fill="#69d8a0" d=""/>
+<path id="upperBand3" fill="#ffdc61" d=""/>
+<path id="upperBand4" fill="#ffa95c" d=""/>
+<path id="upperBand5" fill="#ff6d8e" d=""/>
 </g>
-<rect id="bottomSand" x="144" y="294" width="212" height="168" fill="url(#bottomRainbow)" clip-path="url(#lowerClip)"/>
-<!-- Stream length is updated each frame to reach the current lower sand surface. -->
+<!-- Deposited colour layers accumulate from the bottom with softly mounded surfaces. -->
+<g id="lowerLayers" clip-path="url(#lowerClip)">
+<path id="lowerBand0" fill="#c38dff" d=""/>
+<path id="lowerBand1" fill="#62c7f5" d=""/>
+<path id="lowerBand2" fill="#69d8a0" d=""/>
+<path id="lowerBand3" fill="#ffdc61" d=""/>
+<path id="lowerBand4" fill="#ffa95c" d=""/>
+<path id="lowerBand5" fill="#ff6d8e" d=""/>
+</g>
 <g id="particles" aria-hidden="true">
-<line id="sandStream" x1="250" y1="288" x2="250" y2="462" stroke="url(#pourRainbow)" stroke-width="4" stroke-linecap="round"/>
-<circle class="grain" cx="248" cy="296" r="3.0" fill="#ff6d8e"/>
-<circle class="grain" cx="252" cy="320" r="2.6" fill="#ffa95c"/>
-<circle class="grain" cx="249" cy="345" r="2.9" fill="#ffdc61"/>
-<circle class="grain" cx="251" cy="370" r="2.5" fill="#69d8a0"/>
-<circle class="grain" cx="247" cy="399" r="2.7" fill="#62c7f5"/>
-<circle class="grain" cx="253" cy="435" r="2.8" fill="#c38dff"/>
-</g></g>
+<line id="sandStream" x1="250" y1="287" x2="250" y2="462" stroke="#c38dff" stroke-width="3.5" stroke-linecap="round"/>
+<circle class="grain" cx="248" cy="300" r="2.6" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="250" cy="316" r="1.8" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="252" cy="332" r="1.8" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="248" cy="348" r="2.6" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="250" cy="364" r="1.8" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="252" cy="380" r="1.8" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="248" cy="396" r="2.6" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="250" cy="412" r="1.8" fill="#c38dff" opacity=".9"/>
+<circle class="grain" cx="252" cy="428" r="1.8" fill="#c38dff" opacity=".9"/>
+</g>
+</g>
 <path d="M177 144 Q181 199 215 235 M175 435 Q177 385 214 354" fill="none" stroke="#fff" stroke-width="8" opacity=".28" stroke-linecap="round"/>
 <rect x="134" y="98" width="15" height="384" rx="7" fill="url(#wood)"/>
 <rect x="351" y="98" width="15" height="384" rx="7" fill="url(#wood)"/>
@@ -148,8 +132,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #fdd6
 (() => {
 "use strict";
 const el=id=>document.getElementById(id);
-const visual=el("visual"),rotator=el("rotator"),sandLayer=el("sand"),topSand=el("topSand"),bottomSand=el("bottomSand");
+const visual=el("visual"),rotator=el("rotator"),sandLayer=el("sand");
+const upperBands=Array.from({length:6},(_,i)=>el("upperBand"+i));
+const lowerBands=Array.from({length:6},(_,i)=>el("lowerBand"+i));
 const stream=el("sandStream"),grains=Array.from(document.querySelectorAll("#particles .grain"));
+const rainbow=["#c38dff","#62c7f5","#69d8a0","#ffdc61","#ffa95c","#ff6d8e"];
 const status=el("status"),setup=el("setup"),minutes=el("minutes"),seconds=el("seconds"),error=el("error");
 const turn=el("turn"),pause=el("pause"),resume=el("resume"),change=el("change");
 let state="ready",angle=0,duration=120000,remaining=duration,deadline=0,raf=0,flipTimer=0,token=0;
@@ -163,24 +150,50 @@ function show(){
   turn.textContent=state==="finished"?"↻ Turn Again":"↻ Turn Hourglass";
 }
 function sand(progress){
- // Sand level must rise LINEARLY with elapsed time, not sqrt(time),
- // which previously made the lower chamber look almost full far too soon.
  const p=Math.max(0,Math.min(1,progress));
- const upper=169*(1-p),lower=168*p;
- // Crop only the purple/blue/lower layers as the level retreats upwards.
- // The six color bands NEVER change position or get rescaled by SVG.
- topSand.setAttribute("y","118");topSand.setAttribute("height",String(upper));
- const sandSurface=462-lower;
- bottomSand.setAttribute("y",String(sandSurface));bottomSand.setAttribute("height",String(lower));
- // Let the stream reach the actual sand surface, even at the start.
- stream.setAttribute("y2",String(sandSurface+1));
- // Colored grains travel down the changing-length stream all the way to the pile.
- const distance=Math.max(0,sandSurface-291);
- const cycle=(Date.now()%1150)/1150;
+ const compact=n=>Math.round(n*100)/100;
+ // The two triangular chambers have different visible heights for the same
+ // volume of sand. The TOP surface moves downward toward the neck,
+ // while the remaining coloured grains always reach the neck.
+ const upperY=remainingVolume=>287-169*Math.sqrt(Math.max(0,remainingVolume));
+ // The BOTTOM chamber builds slowly at first from its broad base,
+ // then rises, forming a small sloped mound where the stream lands.
+ const lowerY=depositedVolume=>293+169*Math.sqrt(Math.max(0,1-depositedVolume));
+ const mound=y=>Math.max(0,Math.min(14,(462-y)*.35,(y-293)*.25));
+ function topStrip(yTop,yBottom){
+  // A shallow dip at the centre gives the draining pile a natural funnel.
+  const a=compact(yTop),b=compact(yBottom);
+  return "M 140 "+a+" Q 250 "+compact(a+7)+" 360 "+a+
+    " L 360 "+b+" Q 250 "+compact(b+7)+" 140 "+b+" Z";
+ }
+ function bottomStrip(yTop,yBottom){
+  const a=compact(yTop),b=compact(yBottom);
+  return "M 140 "+a+" Q 250 "+compact(a-2*mound(a))+" 360 "+a+
+    " L 360 "+b+" Q 250 "+compact(b-2*mound(b))+" 140 "+b+" Z";
+ }
+ // Material order, from bottom of the original upper chamber to top:
+ // purple -> blue -> green -> yellow -> orange -> pink.
+ rainbow.forEach((colour,i)=>{
+  const start=i/6,end=(i+1)/6;
+  const upperLo=Math.max(p,start),upperHi=end;
+  upperBands[i].setAttribute("d",upperHi>upperLo+1e-9
+    ?topStrip(upperY(upperHi-p),upperY(upperLo-p)):"");
+  const lowerLo=start,lowerHi=Math.min(p,end);
+  lowerBands[i].setAttribute("d",lowerHi>lowerLo+1e-9
+    ?bottomStrip(lowerY(lowerHi),lowerY(lowerLo)):"");
+ });
+ const surface=lowerY(p)-mound(lowerY(p));
+ // The thin coloured stream really touches the apex of the growing pile.
+ stream.setAttribute("y2",String(compact(surface+1)));
+ const activeColor=rainbow[Math.min(5,Math.floor(Math.max(0,p-0.000001)*6))];
+ stream.setAttribute("stroke",activeColor);
+ const distance=Math.max(0,surface-290);
+ const cycle=(Date.now()%800)/800;
  grains.forEach((grain,i)=>{
   const along=(cycle+i/grains.length)%1;
-  grain.setAttribute("cy",String(291+distance*along));
-  grain.setAttribute("cx",String(250+Math.sin((along*9+i)*2.3)*2.5));
+  grain.setAttribute("cy",String(compact(289+along*distance)));
+  grain.setAttribute("cx",String(compact(250+Math.sin((along*12+i*0.9))*2.1)));
+  grain.setAttribute("fill",activeColor);
  });
 }
 function stop(){
