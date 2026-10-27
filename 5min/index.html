@@ -325,8 +325,10 @@ function toggleFlap(flap) {
     if (flap === minuteFlap) {
         cancelMinuteTimer();
         if (isOpen) {
-            // Hold 1 Second to go for 500ms after the opening flap animation.
-            showOneSecondToGo();
+            // Keep the panel labelled 1 Minute to go while the flap opens.
+            // Hold it for 500ms after the opening animation, then start at 60 seconds.
+            resetMinuteText();
+            minuteFlap.setAttribute('aria-label', 'Close 1 minute to go');
             const flapAnimation = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 800;
             minuteIntroTimeout = setTimeout(() => {
                 minuteIntroTimeout = null;
